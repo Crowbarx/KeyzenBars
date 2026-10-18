@@ -4,6 +4,7 @@
 ## Author: Eric
 ## Version: @project-version@
 ## SavedVariables: KeyzenBarsDB
+## X-Curse-Project-ID: 1751764
 ## Category: Action Bars
 ## IconTexture: Interface\AddOns\KeyzenBars\Media\Icon.tga
 
