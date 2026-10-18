@@ -1,0 +1,19 @@
+## Interface: 16001
+## Title: Keyzen Bars
+## Notes: Action bars laid out like the Azeron Keyzen keypad, with a Naga grid, XP bar and profiles.
+## Author: Eric
+## Version: @project-version@
+## SavedVariables: KeyzenBarsDB
+## Category: Action Bars
+## IconTexture: Interface\AddOns\KeyzenBars\Media\Icon.tga
+
+Libs\LibStub\LibStub.lua
+Libs\CallbackHandler-1.0\CallbackHandler-1.0.lua
+Libs\LibActionButton-1.0\LibActionButton-1.0.lua
+
+Layout.lua
+Blizzard.lua
+Core.lua
+Menus.lua
+XPBar.lua
+Options.lua
