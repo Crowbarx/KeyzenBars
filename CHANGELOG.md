@@ -1,5 +1,9 @@
 # Keyzen Bars
 
+## 1.0.1
+
+- The Background sliders are gone from the options window, since the public themes have no background art.
+
 ## 1.0.0
 
 First public release.

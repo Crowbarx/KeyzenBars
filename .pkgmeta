@@ -6,3 +6,4 @@ ignore:
   - .github
   - .gitignore
   - .pkgmeta
+  - Screenshots

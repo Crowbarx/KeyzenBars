@@ -15,6 +15,18 @@ Action bars laid out like the Azeron Keyzen keypad, for WoW Forever (Interface 1
 - **Profiles:** share one setup across characters, or copy single modules between profiles.
 - **Options window:** type /kz. It has themes (class colored, Midnight and Dark), window size and scale sliders, and opacity sliders.
 
+## Screenshots
+
+![Keyzen bar](Screenshots/06-keyzen-bar.png)
+![Bars unlocked for moving](Screenshots/04-unlocked-layout.jpg)
+![Experience bar](Screenshots/03-xp-bar.png)
+![Naga grid](Screenshots/07-naga-grid.png)
+![Options, class colored theme](Screenshots/01-options-general-class-colored.jpg)
+![Bar settings](Screenshots/02-options-bars.jpg)
+![Button settings, Midnight theme](Screenshots/05-options-buttons-midnight.png)
+![Window settings, Midnight theme](Screenshots/08-options-window-midnight.png)
+![Window buttons, Dark theme](Screenshots/09-options-menu-bags.png)
+
 ## Commands
 
 - `/kz`: open or close the options.

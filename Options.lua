@@ -796,8 +796,11 @@ local function GeneralWindow(view)
 		function(v) DB.optClassAccent = v end)
 	ColorRow(s, "Accent color", "Used when class color accent is off.", function() return DB.optAccent end,
 		function(c) DB.optAccent = c end, nil, { disabled = function() return DB.optClassAccent end })
-	Slider(s, "Background image", "How much of the art shows.", function() return DB.optArtAlpha end,
-		function(v) DB.optArtAlpha = v end, 0, 1, 0.05, { percent = true, reserve = 260 })
+	-- Only the Sylvanas theme has art, so the slider only shows in copies with it.
+	if ns.HAS_SYLVANAS then
+		Slider(s, "Background image", "How much of the art shows.", function() return DB.optArtAlpha end,
+			function(v) DB.optArtAlpha = v end, 0, 1, 0.05, { percent = true, reserve = 260 })
+	end
 	Slider(s, "Panel darkness", "Lower lets more world through.", function() return DB.optTint end,
 		function(v) DB.optTint = v end, 0, 1, 0.05, { percent = true, reserve = 260 })
 end
@@ -1449,7 +1452,7 @@ local function CreateWindow()
 		navButtons[i] = nb
 	end
 
-	-- Header controls, like EllesmereUI's: content scale and the art's opacity.
+	-- Header controls, like EllesmereUI's: window size, content scale and the art's opacity.
 	-- Scale applies when the slider is let go, so it doesn't move under the
 	-- mouse mid-drag.
 	local sizeSlider = HeaderSlider(root, "Window Size", function() return DB.optWindowSize or 1 end,
@@ -1460,10 +1463,12 @@ local function CreateWindow()
 		function(v) DB.optContentScale = v end, 0.5, 1.2, 0.05, ApplyContentScale)
 	scaleSlider:SetPoint("TOPRIGHT", sizeSlider, "BOTTOMRIGHT", 0, -6)
 	scaleSlider:SetFrameLevel(drag:GetFrameLevel() + 2)
-	local artSlider = HeaderSlider(root, "Background", function() return DB.optArtAlpha end,
-		function(v) DB.optArtAlpha = v end, 0, 1, 0.05)
-	artSlider:SetPoint("TOPRIGHT", scaleSlider, "BOTTOMRIGHT", 0, -6)
-	artSlider:SetFrameLevel(drag:GetFrameLevel() + 2)
+	if ns.HAS_SYLVANAS then
+		local artSlider = HeaderSlider(root, "Background", function() return DB.optArtAlpha end,
+			function(v) DB.optArtAlpha = v end, 0, 1, 0.05)
+		artSlider:SetPoint("TOPRIGHT", scaleSlider, "BOTTOMRIGHT", 0, -6)
+		artSlider:SetFrameLevel(drag:GetFrameLevel() + 2)
+	end
 
 	widgets[#widgets + 1] = function()
 		if root:GetScale() ~= DB.optContentScale and not scaleSlider:IsMouseOver() then ApplyContentScale() end
