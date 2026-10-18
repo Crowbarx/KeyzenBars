@@ -2,6 +2,7 @@
 
 ## 1.0.1
 
+- Shamans: the call totem bar is now a movable Keyzen bar, with its options under Menu & Bags.
 - The Background sliders are gone from the options window, since the public themes have no background art.
 
 ## 1.0.0

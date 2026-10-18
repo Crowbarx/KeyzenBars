@@ -9,6 +9,7 @@ Action bars laid out like the Azeron Keyzen keypad, for WoW Forever (Interface 1
 - **Stance bar and extra bars:** add as many bars as you like, each with its own size, spacing, fading and bar page.
 - **Its own keybinds:** hover a button and press a key, straight from the bar. Shift no longer flips your bar page by accident.
 - **Blizzard's bars hidden:** the micro menu and bag bar are moved into movable Keyzen bars with orientation, size and fading options.
+- **Shaman totem bar:** Blizzard's call totem bar becomes a movable Keyzen bar with the Keyzen button look, and size, spacing, orientation and fading options.
 - **Window buttons:** one click puts Character (with your portrait), Map, Spellbook, Talents and more on any button.
 - **New spells on your bars:** spells you learn drop onto the first empty button. This can be switched off.
 - **Experience bar:** a class gradient bar with time this level, played and session time, XP per hour, time to level, kills to level, quest XP ready to hand in, and rested XP.

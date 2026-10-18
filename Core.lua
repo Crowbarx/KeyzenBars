@@ -64,6 +64,9 @@ local DEFAULTS = {
 			visibility = "always", point = { "BOTTOMRIGHT", "UIParent", "BOTTOMRIGHT", -8, 8 } },
 		bags = { show = true, scale = 1, alpha = 1, spacing = 4, perRow = 12, orientation = "horizontal", showKeyring = true,
 			visibility = "always", point = { "BOTTOMRIGHT", "UIParent", "BOTTOMRIGHT", -8, 56 } },
+		-- Blizzard's shaman call totem bar (Totems.lua)
+		totem = { show = true, scale = 1, alpha = 1, spacing = 4, orientation = "horizontal",
+			visibility = "always", point = { "BOTTOM", "UIParent", "BOTTOM", 0, 200 } },
 		-- Experience bar (XPBar.lua)
 		xp = { show = true, scale = 1, alpha = 1, visibility = "always",
 			point = { "TOP", "UIParent", "TOP", 0, -40 }, width = 571, height = 22,
@@ -329,6 +332,7 @@ local function AddBorder(frame, rgb, fill)
 	bg:SetColorTexture(fill, fill, fill, 0.85)
 	return border, bg
 end
+ns.AddBorder = AddBorder
 
 -- Proc glow: a pulsing outline in the glow color, shown while Blizzard lights
 -- up the spell (Keyzen Bars ships without LibCustomGlow).
@@ -931,6 +935,7 @@ local function Refresh()
 	for key in pairs(holders) do ApplyHolder(key) end
 	UpdateButtonSettings()
 	if ns.LayoutMenus then ns.LayoutMenus() end
+	if ns.LayoutTotems then ns.LayoutTotems() end
 	if ns.StyleXPBar then
 		ns.StyleXPBar()
 		ns.ApplyBlizzardXP()
@@ -997,7 +1002,7 @@ ns.PROFILE_MODULES = {
 		"fingerNames", "showMacro", "macroFontSize", "countFontSize", "textFont" } },
 	{ key = "animations", text = "Animations", fields = { "flash", "pushedStyle", "highlightStyle",
 		"interactionColor", "procGlow", "glowColor", "activeHighlight", "activeColor" } },
-	{ key = "menus", text = "Menu & Bags", fields = { "ownMenus", "bars.menu", "bars.bags" } },
+	{ key = "menus", text = "Menu & Bags", fields = { "ownMenus", "bars.menu", "bars.bags", "bars.totem" } },
 	{ key = "xp", text = "Experience", fields = { "bars.xp" } },
 	{ key = "window", text = "Options window", fields = { "optContentScale", "optWindowSize", "optArtAlpha",
 		"optTint", "optAccent", "optTheme", "optClassAccent" } },
@@ -1317,6 +1322,7 @@ local function Init()
 
 	CreateStanceBar()
 	if DB.ownMenus and ns.CreateMenus then ns.CreateMenus() end
+	if ns.CreateTotems then ns.CreateTotems() end
 	if ns.CreateXPBar then ns.CreateXPBar() end
 
 	LAB.RegisterCallback(ns, "OnButtonUpdate", function(_, button)

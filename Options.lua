@@ -994,6 +994,23 @@ local function MenuPage(view)
 				{ disabled = function() return Off() or not _G.KeyRingButton end })
 		end
 	end
+
+	-- Shamans only: the call totem bar.
+	local function Cfg() return DB.bars.totem end
+	local function Off() return not (ns.TotemsAvailable and ns.TotemsAvailable()) end
+	s = Section(view, "Totem bar")
+	Toggle(s, "Show", "Shamans only.", function() return Cfg().show end,
+		function(v) Cfg().show = v end, { disabled = Off })
+	Dropdown(s, "Visibility", "Hidden also stops clicks.", MENU_VISIBILITY,
+		function() return Cfg().visibility end, function(v) Cfg().visibility = v end, { width = 170, disabled = Off })
+	Dropdown(s, "Orientation", nil, ORIENTATIONS, function() return Cfg().orientation end,
+		function(v) Cfg().orientation = v end, { width = 170, disabled = Off })
+	Slider(s, "Size", nil, function() return Cfg().scale end, function(v) Cfg().scale = v end,
+		0.4, 2, 0.05, { percent = true, disabled = Off })
+	Slider(s, "Spacing", nil, function() return Cfg().spacing end, function(v) Cfg().spacing = v end,
+		0, 12, 1, { disabled = Off })
+	Slider(s, "Opacity", nil, function() return Cfg().alpha end, function(v) Cfg().alpha = v end,
+		0.1, 1, 0.05, { percent = true, disabled = Off })
 end
 
 local function XPPage(view)
