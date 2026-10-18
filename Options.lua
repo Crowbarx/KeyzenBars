@@ -995,6 +995,25 @@ local function MenuPage(view)
 		end
 	end
 
+	-- Hunters, warlocks and anyone else with a pet.
+	local function Pet() return DB.bars.pet end
+	local function NoPet() return not (ns.PetBarAvailable and ns.PetBarAvailable()) end
+	s = Section(view, "Pet bar")
+	Toggle(s, "Show", "Shows while you have a pet.", function() return Pet().show end,
+		function(v) Pet().show = v end, { disabled = NoPet })
+	Dropdown(s, "Visibility", "Hidden also stops clicks.", MENU_VISIBILITY,
+		function() return Pet().visibility end, function(v) Pet().visibility = v end, { width = 170, disabled = NoPet })
+	Dropdown(s, "Orientation", nil, ORIENTATIONS, function() return Pet().orientation end,
+		function(v) Pet().orientation = v end, { width = 170, disabled = NoPet })
+	Slider(s, "Buttons per row", nil, function() return Pet().perRow end, function(v) Pet().perRow = v end,
+		1, 10, 1, { disabled = NoPet })
+	Slider(s, "Button size", nil, function() return Pet().size end, function(v) Pet().size = v end,
+		20, 60, 1, { disabled = NoPet })
+	Slider(s, "Spacing", nil, function() return Pet().spacing end, function(v) Pet().spacing = v end,
+		0, 12, 1, { disabled = NoPet })
+	Slider(s, "Opacity", nil, function() return Pet().alpha end, function(v) Pet().alpha = v end,
+		0.1, 1, 0.05, { percent = true, disabled = NoPet })
+
 	-- Shamans only: the call totem bar.
 	local function Cfg() return DB.bars.totem end
 	local function Off() return not (ns.TotemsAvailable and ns.TotemsAvailable()) end

@@ -17,5 +17,6 @@ Blizzard.lua
 Core.lua
 Menus.lua
 Totems.lua
+PetBar.lua
 XPBar.lua
 Options.lua

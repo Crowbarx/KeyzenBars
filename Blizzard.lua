@@ -4,8 +4,8 @@ local _, ns = ...
 -- client: reparent the bars to a hidden frame instead of calling Hide(),
 -- which taints Blizzard's protected show/hide path. MainActionBar stays in
 -- Blizzard's parent chain (the micro menu needs it after pet battles), so it
--- is made invisible and unclickable instead. The pet bar is left alone until
--- Keyzen Bars has one of its own.
+-- is made invisible and unclickable instead. The pet bar stays where it is:
+-- PetBar.lua borrows its buttons and keeps the bar itself running unseen.
 local REPARENT = {
 	"MultiBarBottomLeft", "MultiBarBottomRight", "MultiBarRight", "MultiBarLeft",
 	"MultiBar5", "MultiBar6", "MultiBar7", "StanceBar",
