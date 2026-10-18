@@ -1064,6 +1064,21 @@ local function TotemPage(view)
 		0.1, 1, 0.05, { percent = true, disabled = Off })
 end
 
+-- The vehicle and flight exit button.
+local function VehiclePage(view)
+	local function Cfg() return DB.bars.vehicle end
+	local s = Section(view, "Leave vehicle button")
+	Toggle(s, "Show", "Appears in a vehicle or on a flight you can end early.", function() return Cfg().show end,
+		function(v) Cfg().show = v end)
+	Dropdown(s, "Visibility", "When it shows.", MENU_VISIBILITY,
+		function() return Cfg().visibility end, function(v) Cfg().visibility = v end, { width = 170 })
+	Slider(s, "Button size", nil, function() return Cfg().size end, function(v) Cfg().size = v end, 20, 64, 1)
+	Slider(s, "Scale", nil, function() return Cfg().scale end, function(v) Cfg().scale = v end,
+		0.5, 2, 0.05, { percent = true })
+	Slider(s, "Opacity", nil, function() return Cfg().alpha end, function(v) Cfg().alpha = v end,
+		0.1, 1, 0.05, { percent = true })
+end
+
 local function XPPage(view)
 	local function Cfg() return DB.bars.xp end
 	local function Get(k) return function() return Cfg()[k] end end
@@ -1257,8 +1272,9 @@ local PAGES = {
 		tabs = { { "Text", TextPage } } },
 	{ nav = "Animations", title = "Animations", subtitle = "Press, hover and proc effects.",
 		tabs = { { "Animations", AnimationsPage } } },
-	{ nav = "Utility Bars", title = "Utility Bars", subtitle = "Stance, pet, totem, menu and bag bars, and window buttons.",
-		tabs = { { "Stance", StancePage }, { "Pet", PetPage }, { "Totems", TotemPage }, { "Menu & Bags", MenuPage } } },
+	{ nav = "Utility Bars", title = "Utility Bars", subtitle = "Stance, pet, totem, vehicle, menu and bag bars, and window buttons.",
+		tabs = { { "Stance", StancePage }, { "Pet", PetPage }, { "Totems", TotemPage }, { "Vehicle", VehiclePage },
+			{ "Menu & Bags", MenuPage } } },
 	{ nav = "Experience", title = "Experience", subtitle = "Your XP bar, with times, rate and quest XP.",
 		tabs = { { "Experience", XPPage } } },
 	{ nav = "Profiles", title = "Profiles", subtitle = "Save setups, share them between characters, copy single modules.",
@@ -1474,7 +1490,9 @@ local function CreateWindow()
 		RefreshWidgets()
 	end
 
-	for i = 1, 4 do
+	local mostTabs = 1
+	for _, page in ipairs(PAGES) do mostTabs = math.max(mostTabs, #page.tabs) end
+	for i = 1, mostTabs do
 		local tb = CreateFrame("Button", nil, root)
 		tb:SetHeight(TABS)
 		tb.text = Label(tb, FONT_BOLD, 15, TEXT)

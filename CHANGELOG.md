@@ -3,8 +3,9 @@
 ## 1.0.2
 
 - Pet bar: Blizzard's pet buttons become a movable Keyzen bar, shown while you have a pet.
+- Leave vehicle button: shows in a vehicle or on a flight you can end early, now that Blizzard's main bar is hidden.
 - Search: type in the box above General to find any setting, with its controls right in the results.
-- Menu & Bags is now Utility Bars, with tabs for the stance, pet, totem, menu and bag bars.
+- Menu & Bags is now Utility Bars, with tabs for the stance, pet, totem, vehicle, menu and bag bars.
 
 ## 1.0.1
 

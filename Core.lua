@@ -64,6 +64,9 @@ local DEFAULTS = {
 			visibility = "always", point = { "BOTTOMRIGHT", "UIParent", "BOTTOMRIGHT", -8, 8 } },
 		bags = { show = true, scale = 1, alpha = 1, spacing = 4, perRow = 12, orientation = "horizontal", showKeyring = true,
 			visibility = "always", point = { "BOTTOMRIGHT", "UIParent", "BOTTOMRIGHT", -8, 56 } },
+		-- Vehicle and flight exit button (Vehicle.lua)
+		vehicle = { show = true, scale = 1, alpha = 1, size = 36, visibility = "always",
+			point = { "BOTTOM", "UIParent", "BOTTOM", -260, 200 } },
 		-- Blizzard's pet action buttons (PetBar.lua)
 		pet = { show = true, scale = 1, alpha = 1, size = 30, spacing = 4, perRow = 10, orientation = "horizontal",
 			visibility = "always", point = { "BOTTOM", "UIParent", "BOTTOM", 0, 240 } },
@@ -940,6 +943,7 @@ local function Refresh()
 	if ns.LayoutMenus then ns.LayoutMenus() end
 	if ns.LayoutTotems then ns.LayoutTotems() end
 	if ns.LayoutPetBar then ns.LayoutPetBar() end
+	if ns.LayoutVehicleExit then ns.LayoutVehicleExit() end
 	if ns.StyleXPBar then
 		ns.StyleXPBar()
 		ns.ApplyBlizzardXP()
@@ -1006,7 +1010,7 @@ ns.PROFILE_MODULES = {
 		"fingerNames", "showMacro", "macroFontSize", "countFontSize", "textFont" } },
 	{ key = "animations", text = "Animations", fields = { "flash", "pushedStyle", "highlightStyle",
 		"interactionColor", "procGlow", "glowColor", "activeHighlight", "activeColor" } },
-	{ key = "menus", text = "Utility bars", fields = { "ownMenus", "bars.menu", "bars.bags", "bars.totem", "bars.pet" } },
+	{ key = "menus", text = "Utility bars", fields = { "ownMenus", "bars.menu", "bars.bags", "bars.totem", "bars.pet", "bars.vehicle" } },
 	{ key = "xp", text = "Experience", fields = { "bars.xp" } },
 	{ key = "window", text = "Options window", fields = { "optContentScale", "optWindowSize", "optArtAlpha",
 		"optTint", "optAccent", "optTheme", "optClassAccent" } },
@@ -1328,6 +1332,7 @@ local function Init()
 	if DB.ownMenus and ns.CreateMenus then ns.CreateMenus() end
 	if ns.CreateTotems then ns.CreateTotems() end
 	if ns.CreatePetBar then ns.CreatePetBar() end
+	if ns.CreateVehicleExit then ns.CreateVehicleExit() end
 	if ns.CreateXPBar then ns.CreateXPBar() end
 
 	LAB.RegisterCallback(ns, "OnButtonUpdate", function(_, button)
