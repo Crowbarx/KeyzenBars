@@ -1,5 +1,11 @@
 # Keyzen Bars
 
+## 1.0.2
+
+- Pet bar: Blizzard's pet buttons become a movable Keyzen bar, shown while you have a pet.
+- Search: type in the box above General to find any setting, with its controls right in the results.
+- Menu & Bags is now Utility Bars, with tabs for the stance, pet, totem, menu and bag bars.
+
 ## 1.0.1
 
 - Shamans: the call totem bar is now a movable Keyzen bar, with its options under Menu & Bags.

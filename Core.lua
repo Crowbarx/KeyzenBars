@@ -1006,7 +1006,7 @@ ns.PROFILE_MODULES = {
 		"fingerNames", "showMacro", "macroFontSize", "countFontSize", "textFont" } },
 	{ key = "animations", text = "Animations", fields = { "flash", "pushedStyle", "highlightStyle",
 		"interactionColor", "procGlow", "glowColor", "activeHighlight", "activeColor" } },
-	{ key = "menus", text = "Menu & Bags", fields = { "ownMenus", "bars.menu", "bars.bags", "bars.totem", "bars.pet" } },
+	{ key = "menus", text = "Utility bars", fields = { "ownMenus", "bars.menu", "bars.bags", "bars.totem", "bars.pet" } },
 	{ key = "xp", text = "Experience", fields = { "bars.xp" } },
 	{ key = "window", text = "Options window", fields = { "optContentScale", "optWindowSize", "optArtAlpha",
 		"optTint", "optAccent", "optTheme", "optClassAccent" } },

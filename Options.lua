@@ -26,6 +26,9 @@ local window, root, menu -- root holds everything and carries the content scale
 local widgets = {}  -- refresh functions, run after every change
 local views = {}    -- scrolling tab pages, re-laid out after every change
 local selectedBar = "keyzen"
+-- Search: every row, with where it lives. building is the page and tab being
+-- made while CreateWindow builds them.
+local searchIndex, building = {}, {}
 
 local function ClassRGB()
 	local _, class = UnitClass("player")
@@ -288,7 +291,7 @@ end
 -- shown (optional) hides the whole section, e.g. Keyzen-only options.
 local function Section(view, title, shown)
 	local s = CreateFrame("Frame", nil, view.child)
-	s.rows, s.shown = {}, shown
+	s.rows, s.shown, s.title = {}, shown, title
 	local h = Label(s, FONT_BOLD, 11, MUTED, title:upper())
 	h:SetPoint("TOPLEFT", 2, 0)
 	local rule = Fill(s, "ARTWORK", 1, 1, 1, 0.08)
@@ -324,6 +327,8 @@ local function Row(section, label, desc, opts)
 		row.text:SetPoint("LEFT", 18, 0)
 	end
 	section.rows[#section.rows + 1] = row
+	searchIndex[#searchIndex + 1] = { row = row, section = section, label = label, desc = desc,
+		page = building.page, tab = building.tab }
 	if opts.disabled then
 		widgets[#widgets + 1] = function()
 			local off = opts.disabled()
@@ -624,13 +629,16 @@ local function NewView(content)
 				s:SetWidth(width)
 				local ry, col = 24, 0
 				for _, row in ipairs(s.rows) do
-					row:ClearAllPoints()
-					if row.full then
+					-- A row lent to search results is laid out there.
+					if row.kzBorrowed then
+					elseif row.full then
+						row:ClearAllPoints()
 						if col == 1 then ry, col = ry + ROW_H + GAP, 0 end
 						row:SetPoint("TOPLEFT", s, "TOPLEFT", 0, -ry)
 						row:SetSize(width, ROW_H)
 						ry = ry + ROW_H + GAP
 					else
+						row:ClearAllPoints()
 						row:SetPoint("TOPLEFT", s, "TOPLEFT", col * (half + GAP), -ry)
 						row:SetSize(half, ROW_H)
 						if col == 1 then ry, col = ry + ROW_H + GAP, 0 else col = 1 end
@@ -709,7 +717,6 @@ local function BarChoices()
 	local list = {
 		{ value = "keyzen", text = "Keyzen" },
 		{ value = "naga", text = "Naga" },
-		{ value = "stance", text = "Stances" },
 	}
 	for n in ipairs(DB.extra) do
 		list[#list + 1] = { value = "extra" .. n, text = ns.ExtraBarName(n) }
@@ -730,7 +737,7 @@ end
 ------------------------------------------------------------------------------
 
 local function Bar()
-	local cfg = ns.BarDB(selectedBar)
+	local cfg = selectedBar ~= "stance" and ns.BarDB(selectedBar)
 	if not cfg then
 		selectedBar = "keyzen"
 		cfg = ns.BarDB(selectedBar)
@@ -994,8 +1001,30 @@ local function MenuPage(view)
 				{ disabled = function() return Off() or not _G.KeyRingButton end })
 		end
 	end
+end
 
-	-- Hunters, warlocks and anyone else with a pet.
+-- Stance and form buttons, from the class's own forms.
+local function StancePage(view)
+	local function Cfg() return DB.bars.stance end
+	local s = Section(view, "Stance bar")
+	Toggle(s, "Show", "Stances, forms, auras and stealth.", function() return Cfg().show end,
+		function(v) Cfg().show = v end)
+	Dropdown(s, "Visibility", "When it shows.", VISIBILITY,
+		function() return Cfg().visibility end, function(v) Cfg().visibility = v end, { width = 170 })
+	Slider(s, "Button size", nil, function() return Cfg().size end, function(v) Cfg().size = v end, 16, 64, 1)
+	Slider(s, "Button spacing", nil, function() return Cfg().spacing end, function(v) Cfg().spacing = v end, 0, 12, 1)
+	Slider(s, "Scale", nil, function() return Cfg().scale end, function(v) Cfg().scale = v end,
+		0.5, 2, 0.05, { percent = true })
+	Slider(s, "Opacity", nil, function() return Cfg().alpha end, function(v) Cfg().alpha = v end,
+		0.1, 1, 0.05, { percent = true })
+	Toggle(s, "Highlight active stance", "Colors your current stance or form, plus auto attack.",
+		function() return DB.activeHighlight end, function(v) DB.activeHighlight = v end,
+		{ color = { function() return DB.activeColor end, function(c) DB.activeColor = c end } })
+end
+
+-- Hunters, warlocks and anyone else with a pet.
+local function PetPage(view)
+	local s
 	local function Pet() return DB.bars.pet end
 	local function NoPet() return not (ns.PetBarAvailable and ns.PetBarAvailable()) end
 	s = Section(view, "Pet bar")
@@ -1013,8 +1042,11 @@ local function MenuPage(view)
 		0, 12, 1, { disabled = NoPet })
 	Slider(s, "Opacity", nil, function() return Pet().alpha end, function(v) Pet().alpha = v end,
 		0.1, 1, 0.05, { percent = true, disabled = NoPet })
+end
 
-	-- Shamans only: the call totem bar.
+-- Shamans only: the call totem bar.
+local function TotemPage(view)
+	local s
 	local function Cfg() return DB.bars.totem end
 	local function Off() return not (ns.TotemsAvailable and ns.TotemsAvailable()) end
 	s = Section(view, "Totem bar")
@@ -1225,8 +1257,8 @@ local PAGES = {
 		tabs = { { "Text", TextPage } } },
 	{ nav = "Animations", title = "Animations", subtitle = "Press, hover and proc effects.",
 		tabs = { { "Animations", AnimationsPage } } },
-	{ nav = "Menu & Bags", title = "Menu & Bags", subtitle = "Blizzard's micro menu and bag buttons, as movable bars.",
-		tabs = { { "Menu & Bags", MenuPage } } },
+	{ nav = "Utility Bars", title = "Utility Bars", subtitle = "Stance, pet, totem, menu and bag bars, and window buttons.",
+		tabs = { { "Stance", StancePage }, { "Pet", PetPage }, { "Totems", TotemPage }, { "Menu & Bags", MenuPage } } },
 	{ nav = "Experience", title = "Experience", subtitle = "Your XP bar, with times, rate and quest XP.",
 		tabs = { { "Experience", XPPage } } },
 	{ nav = "Profiles", title = "Profiles", subtitle = "Save setups, share them between characters, copy single modules.",
@@ -1396,19 +1428,23 @@ local function CreateWindow()
 	done:SetPoint("BOTTOMRIGHT", -PAD, 14)
 
 	-- Build every page's tabs up front.
-	for _, page in ipairs(PAGES) do
-		for _, tab in ipairs(page.tabs) do
+	for i, page in ipairs(PAGES) do
+		for j, tab in ipairs(page.tabs) do
+			building.page, building.tab = i, j
 			tab.view = NewView(content)
 			tab[2](tab.view)
 			tab.view.scroll:Hide()
 		end
 	end
+	building.page, building.tab = nil, nil
 
 	local navButtons, tabButtons = {}, {}
 	local currentPage = 1
+	local ClearSearch
 
 	local function ShowPage(index, tabIndex)
 		CloseMenu()
+		ClearSearch()
 		currentPage = index
 		local page = PAGES[index]
 		tabIndex = tabIndex or page.lastTab or 1
@@ -1464,8 +1500,8 @@ local function CreateWindow()
 	for i, page in ipairs(PAGES) do
 		local nb = CreateFrame("Button", nil, side)
 		nb:SetHeight(44)
-		nb:SetPoint("TOPLEFT", 0, -HEADER - 14 - (i - 1) * 46)
-		nb:SetPoint("TOPRIGHT", -1, -HEADER - 14 - (i - 1) * 46)
+		nb:SetPoint("TOPLEFT", 0, -HEADER - 60 - (i - 1) * 46)
+		nb:SetPoint("TOPRIGHT", -1, -HEADER - 60 - (i - 1) * 46)
 		local sel = Fill(nb, "BACKGROUND", 1, 1, 1, 0.07)
 		sel:SetAllPoints()
 		local hl = Fill(nb, "HIGHLIGHT", 1, 1, 1, 0.04)
@@ -1487,6 +1523,171 @@ local function CreateWindow()
 		end
 		navButtons[i] = nb
 	end
+
+
+	-- Search, like EllesmereUI's: typing above the pages lists every setting
+	-- that matches, with its real controls. The rows are lent from their pages
+	-- while the results show and go back when the search is cleared.
+	local searchBox = CreateFrame("EditBox", nil, side)
+	searchBox:SetPoint("TOPLEFT", 20, -HEADER - 12)
+	searchBox:SetPoint("TOPRIGHT", -20, -HEADER - 12)
+	searchBox:SetHeight(34)
+	searchBox:SetAutoFocus(false)
+	searchBox:SetFont(FONT_MED, 13, "")
+	searchBox:SetTextColor(TEXT[1], TEXT[2], TEXT[3])
+	searchBox:SetTextInsets(12, 30, 0, 0)
+	Fill(searchBox, "BACKGROUND", 0, 0, 0, 0.55):SetAllPoints()
+	local searchOutline = Outline(searchBox, 1, 1, 1, 0.12)
+	local hint = Label(searchBox, FONT_MED, 13, MUTED, "Search settings")
+	hint:SetPoint("LEFT", 12, 0)
+	local clear = CreateFrame("Button", nil, searchBox)
+	clear:SetSize(26, 26)
+	clear:SetPoint("RIGHT", -4, 0)
+	local clearText = Label(clear, FONT_BOLD, 13, MUTED, "X")
+	clearText:SetPoint("CENTER")
+	clear:Hide()
+
+	local results = NewView(content)
+	results.scroll:Hide()
+	results.items = {}
+	local headings, borrowed = {}, {}
+	local searching = false
+	local empty = Label(results.child, FONT_MED, 13, MUTED, "No settings match.")
+	empty:Hide()
+
+	function results:Relayout()
+		local width = self.child:GetWidth()
+		if width < 10 then return end
+		local y = 0
+		for _, item in ipairs(self.items) do
+			if item.heading then
+				if y > 0 then y = y + 18 end
+				item.heading:ClearAllPoints()
+				item.heading:SetPoint("TOPLEFT", self.child, "TOPLEFT", 2, -y)
+				y = y + 24
+			else
+				item.row:ClearAllPoints()
+				item.row:SetPoint("TOPLEFT", self.child, "TOPLEFT", 0, -y)
+				item.row:SetSize(width, ROW_H)
+				y = y + ROW_H + GAP
+			end
+		end
+		self.child:SetHeight(math.max(1, y))
+		self:UpdateScroll()
+	end
+
+	local function ReturnRows()
+		for _, entry in ipairs(borrowed) do
+			entry.row:SetParent(entry.section)
+			entry.row.kzBorrowed = nil
+		end
+		wipe(borrowed)
+		wipe(results.items)
+		for _, h in ipairs(headings) do h:Hide() end
+		empty:Hide()
+		results.scroll:Hide()
+		searching = false
+	end
+
+	local function Heading(n)
+		local h = headings[n]
+		if not h then
+			h = Label(results.child, FONT_BOLD, 11, MUTED)
+			headings[n] = h
+		end
+		h:Show()
+		return h
+	end
+
+	local function Matches(entry, words)
+		local page = PAGES[entry.page]
+		local hay = table.concat({ entry.label or "", entry.desc or "", entry.section.title or "",
+			page.nav, page.tabs[entry.tab][1] }, " "):lower()
+		for _, word in ipairs(words) do
+			if not hay:find(word, 1, true) then return false end
+		end
+		return true
+	end
+
+	local function RunSearch(text)
+		ReturnRows()
+		local words = {}
+		for word in strtrim(text or ""):lower():gmatch("%S+") do words[#words + 1] = word end
+		if #words == 0 then
+			ShowPage(currentPage)
+			return
+		end
+		CloseMenu()
+		searching = true
+		for _, p in ipairs(PAGES) do
+			for _, tab in ipairs(p.tabs) do tab.view.scroll:Hide() end
+		end
+		for _, tb in ipairs(tabButtons) do tb:Hide() end
+		for _, nb in ipairs(navButtons) do nb.selected = false end
+		local count, group, n = 0, nil, 0
+		for _, entry in ipairs(searchIndex) do
+			local s = entry.section
+			if entry.page and (not s.shown or s.shown()) and Matches(entry, words) then
+				local key = entry.page .. ":" .. entry.tab .. ":" .. (s.title or "")
+				if key ~= group then
+					group = key
+					n = n + 1
+					local page = PAGES[entry.page]
+					local where = page.nav
+					if #page.tabs > 1 then where = where .. "  >  " .. page.tabs[entry.tab][1] end
+					local h = Heading(n)
+					h:SetText((where .. "  >  " .. (s.title or "")):upper())
+					results.items[#results.items + 1] = { heading = h }
+				end
+				entry.row:SetParent(results.child)
+				entry.row.kzBorrowed = true
+				borrowed[#borrowed + 1] = entry
+				results.items[#results.items + 1] = { row = entry.row }
+				count = count + 1
+			end
+		end
+		title:SetText("Search")
+		subtitle:SetText(count == 1 and "1 setting matches." or (count .. " settings match."))
+		empty:SetShown(count == 0)
+		empty:SetPoint("TOPLEFT", 2, 0)
+		results.scroll:Show()
+		results.scroll:SetVerticalScroll(0)
+		RefreshWidgets()
+	end
+
+	ClearSearch = function()
+		if not searching and searchBox:GetText() == "" then return end
+		searchBox:SetText("")
+		searchBox:ClearFocus()
+		ReturnRows()
+	end
+
+	local function PaintSearch()
+		local typed = searchBox:GetText() ~= ""
+		hint:SetShown(not typed and not searchBox:HasFocus())
+		clear:SetShown(typed)
+		local a = Accent()
+		if searchBox:HasFocus() then searchOutline(a[1], a[2], a[3], 0.9) else searchOutline(1, 1, 1, 0.12) end
+	end
+	searchBox:SetScript("OnTextChanged", function(self, userInput)
+		PaintSearch()
+		if userInput then RunSearch(self:GetText()) end
+	end)
+	searchBox:SetScript("OnEditFocusGained", PaintSearch)
+	searchBox:SetScript("OnEditFocusLost", PaintSearch)
+	searchBox:SetScript("OnEscapePressed", function(self)
+		if self:GetText() ~= "" then
+			self:SetText("")
+			RunSearch("")
+		end
+		self:ClearFocus()
+	end)
+	searchBox:SetScript("OnEnterPressed", function(self) self:ClearFocus() end)
+	clear:SetScript("OnClick", function()
+		searchBox:SetText("")
+		RunSearch("")
+	end)
+	widgets[#widgets + 1] = PaintSearch
 
 	-- Header controls, like EllesmereUI's: window size, content scale and the art's opacity.
 	-- Scale applies when the slider is let go, so it doesn't move under the

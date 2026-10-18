@@ -14,7 +14,7 @@ Action bars laid out like the Azeron Keyzen keypad, for WoW Forever (Interface 1
 - **New spells on your bars:** spells you learn drop onto the first empty button. This can be switched off.
 - **Experience bar:** a class gradient bar with time this level, played and session time, XP per hour, time to level, kills to level, quest XP ready to hand in, and rested XP.
 - **Profiles:** share one setup across characters, or copy single modules between profiles.
-- **Options window:** type /kz. It has themes (class colored, Midnight and Dark), window size and scale sliders, and opacity sliders.
+- **Options window:** type /kz. It has a settings search, It has themes (class colored, Midnight and Dark), window size and scale sliders, and opacity sliders.
 
 ## Screenshots
 
