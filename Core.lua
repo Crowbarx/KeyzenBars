@@ -418,6 +418,9 @@ local function StyleButton(button, def)
 	-- PreClick runs even for empty buttons, so the flash works before any
 	-- spell is placed.
 	button:HookScript("PreClick", function(self, _, down)
+		-- A click that puts down the spell on the cursor always goes through
+		-- (PreClick runs before the click itself checks kzBlockMouse).
+		if GetCursorInfo() and not InCombatLockdown() then self:SetAttribute("kzBlockMouse", nil) end
 		if DB.flash and down ~= false then self.kzFlash:Stop() self.kzFlash:Play() end
 	end)
 	button:HookScript("OnEnter", function(self)
