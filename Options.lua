@@ -868,11 +868,19 @@ local function BarsDisplay(view)
 		function() return DB.keyzen.showThumb end, function(v) DB.keyzen.showThumb = v end)
 	Toggle(s, "Tab and Esc labels", nil,
 		function() return DB.keyzen.showFixed end, function(v) DB.keyzen.showFixed = v end)
+	Dropdown(s, "Main keys page", "Stances and forms still swap it like the default main bar.", PageChoices,
+		function() return DB.keyzen.mainPage or 1 end, function(v) DB.keyzen.mainPage = v end, { width = 200 })
+	Dropdown(s, "Reach keys page", "The Alt keys.", PageChoices,
+		function() return DB.keyzen.reachPage or 6 end, function(v) DB.keyzen.reachPage = v end, { width = 200 })
+
+	s = Section(view, "Naga buttons", function() return selectedBar == "naga" end)
+	Dropdown(s, "Action page", "The action slots the 12 buttons show.", PageChoices,
+		function() return DB.bars.naga.page or 4 end, function(v) DB.bars.naga.page = v end, { width = 200 })
 
 	-- Getters fall back to defaults because these widgets refresh even while
 	-- a non-extra bar is selected and the section is hidden.
 	s = Section(view, "Buttons on this bar", function() return ExtraIndex() ~= nil end)
-	Dropdown(s, "Action page", "Pages 2, 3 and 5 are free.", PageChoices,
+	Dropdown(s, "Action page", "Pick a page no other bar uses.", PageChoices,
 		function() return Bar().page or 2 end, function(v) Bar().page = v end, { width = 200 })
 	Slider(s, "Number of buttons", nil, function() return Bar().count or 12 end,
 		function(v) Bar().count = v end, 1, 12, 1)

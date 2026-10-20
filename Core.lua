@@ -5,8 +5,8 @@ local PREFIX = "|cff8fd65aKeyzen Bars|r: "
 local MAX_EXTRA_BARS = 10
 local MAX_STANCES = 10
 
-local function BarDefaults(x, y)
-	return { show = true, scale = 1, alpha = 1, size = 38, spacing = 4, visibility = "always",
+local function BarDefaults(x, y, page)
+	return { show = true, scale = 1, alpha = 1, size = 38, spacing = 4, visibility = "always", page = page,
 		point = { "CENTER", "UIParent", "CENTER", x, y } }
 end
 
@@ -57,7 +57,7 @@ local DEFAULTS = {
 
 	bars = {
 		keyzen = BarDefaults(0, -120),
-		naga = BarDefaults(320, -120),
+		naga = BarDefaults(320, -120, 4),
 		stance = BarDefaults(0, 40),
 		-- Blizzard's micro menu and bag buttons, moved into our own holders
 		menu = { show = true, scale = 1, alpha = 1, spacing = 0, perRow = 12, orientation = "horizontal",
@@ -83,7 +83,8 @@ local DEFAULTS = {
 	},
 	ownMenus = true,
 	autoAddSpells = true,
-	keyzen = { showMain = true, showReach = true, showFixed = true, showFar = false, showThumb = false },
+	keyzen = { showMain = true, showReach = true, showFixed = true, showFar = false, showThumb = false,
+		mainPage = 1, reachPage = 6 },
 	extra = {},
 
 	-- Options window
@@ -477,6 +478,29 @@ function ns.Holder(key) return holders[key] end
 -- Action buttons
 ------------------------------------------------------------------------------
 
+-- The action slot a Keyzen or Naga button shows. Each bar can sit on any
+-- action page; each button keeps its place on the page. The main keys
+-- still swap pages for stances and forms like the default main bar.
+local function SlotFor(def)
+	if def.bar == "main" then return ((DB.keyzen.mainPage or 1) - 1) * 12 + def.i end
+	if def.bar == "reach" then return ((DB.keyzen.reachPage or 6) - 1) * 12 + (def.slot - 60) end
+	if def.bar == "naga" then return ((DB.bars.naga.page or 4) - 1) * 12 + (def.slot - 36) end
+	return def.slot
+end
+
+local function ApplySlots()
+	for _, list in ipairs({ ns.KEYS, ns.NAGA }) do
+		for _, def in ipairs(list) do
+			local button = buttons[def.id]
+			if button and def.bar ~= "main" then button:SetState(0, "action", SlotFor(def)) end
+		end
+	end
+	for _, def in ipairs(ns.KEYS) do
+		local button = buttons[def.id]
+		if button and def.bar == "main" then button:SetState(1, "action", SlotFor(def)) end
+	end
+end
+
 local function CreateButton(def, header)
 	defsById[def.id] = def
 	local config = {
@@ -494,9 +518,10 @@ local function CreateButton(def, header)
 		for page = 1, 18 do
 			button:SetState(page, "action", (page - 1) * 12 + def.i)
 		end
-		button:SetState(0, "action", def.i)
+		button:SetState(0, "action", SlotFor(def))
+		button:SetState(1, "action", SlotFor(def))
 	elseif def.slot then
-		button:SetState(0, "action", def.slot)
+		button:SetState(0, "action", SlotFor(def))
 	end
 	-- With buttons unlocked and "cast on click" off, a mouse click does
 	-- nothing, so spells can be dragged around without firing. Keybinds
@@ -931,6 +956,7 @@ local function Refresh()
 			point = { "CENTER", "UIParent", "CENTER", 0, -260 - n * 10 } })
 		BuildExtraBar(n)
 	end
+	ApplySlots()
 	RegisterStateDriver(headers.Main, "page", MainPageCondition())
 	LayoutKeyzen()
 	LayoutNaga()
@@ -1112,14 +1138,14 @@ local function OpenSlots()
 	local slots = {}
 	if DB.bars.keyzen.show then
 		for _, def in ipairs(ns.KEYS) do
-			if def.bar == "main" and ButtonActive(def) then slots[#slots + 1] = def.i end
+			if def.bar == "main" and ButtonActive(def) then slots[#slots + 1] = SlotFor(def) end
 		end
 		for _, def in ipairs(ns.KEYS) do
-			if def.bar == "reach" and ButtonActive(def) then slots[#slots + 1] = def.slot end
+			if def.bar == "reach" and ButtonActive(def) then slots[#slots + 1] = SlotFor(def) end
 		end
 	end
 	if DB.bars.naga.show then
-		for _, def in ipairs(ns.NAGA) do slots[#slots + 1] = def.slot end
+		for _, def in ipairs(ns.NAGA) do slots[#slots + 1] = SlotFor(def) end
 	end
 	for _, cfg in ipairs(DB.extra) do
 		if cfg.show and cfg.kind ~= "bag" then
@@ -1183,10 +1209,10 @@ function ns.ExtraBarName(n)
 	return (cfg and cfg.kind == "bag" and "Bag bar " or "Bar ") .. n
 end
 
--- First action page nobody else uses. Pages 1, 4 and 6 belong to the Keyzen
--- and Naga, and 7-10 are the main bar's stance and form pages.
+-- First action page nobody else uses. The Keyzen and Naga have theirs (1, 6
+-- and 4 unless moved), and 7-10 are the main bar's stance and form pages.
 local function FreePage()
-	local used = { [1] = true, [4] = true, [6] = true }
+	local used = { [DB.keyzen.mainPage or 1] = true, [DB.keyzen.reachPage or 6] = true, [DB.bars.naga.page or 4] = true }
 	for _, cfg in ipairs(DB.extra) do if cfg.page then used[cfg.page] = true end end
 	for _, page in ipairs({ 2, 3, 5 }) do
 		if not used[page] then return page end

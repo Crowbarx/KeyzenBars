@@ -22,11 +22,14 @@ local function NoMouse(frame)
 	if frame.EnableMouseMotion then frame:EnableMouseMotion(false) end
 end
 
+-- The main bar's buttons stay on screen at alpha 0, so they also stop
+-- taking the mouse; otherwise they swallow drops meant for our bars under them.
 local function QuietButtons(frame)
 	if type(frame.actionButtons) ~= "table" then return end
 	for _, button in pairs(frame.actionButtons) do
 		button:UnregisterAllEvents()
 		button:SetAttributeNoHandler("statehidden", true)
+		NoMouse(button)
 	end
 end
 
