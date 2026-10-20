@@ -32,6 +32,7 @@ Action bars laid out like the Azeron Keyzen keypad, for WoW Forever (Interface 1
 
 - `/kz`: open or close the options.
 - `/kz unlock` / `/kz lock`: move the bars.
+- `/kb`: hover a button and press a key to bind it (`/kzbind` if another addon uses `/kb`).
 
 ## Install
 

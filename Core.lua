@@ -1470,3 +1470,12 @@ SlashCmdList.KEYZENBARS = function(msg)
 		ns.ToggleOptions()
 	end
 end
+
+-- /kb toggles bind mode, like most action bar addons. If another addon also
+-- takes /kb, /kzbind always works.
+SLASH_KEYZENBARSBIND1 = "/kb"
+SLASH_KEYZENBARSBIND2 = "/kzbind"
+SlashCmdList.KEYZENBARSBIND = function()
+	if not DB then Print("Not loaded yet. Try again after combat.") return end
+	SetBindMode(not bindMode)
+end
