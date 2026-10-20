@@ -37,6 +37,9 @@ local Feat_PingableButton = WoWModern
 local KeyBound = LibStub("LibKeyBound-1.0", true)
 local CBH = LibStub("CallbackHandler-1.0")
 local LCG = LibStub("LibCustomGlow-1.0", true)
+-- Keyzen Bars: only ElvUI's copy of LibCustomGlow has the overlay glow calls;
+-- the standard one other addons load does not, so it is left unused.
+if LCG and not (LCG.ShowOverlayGlow and LCG.HideOverlayGlow) then LCG = nil end
 local Masque = LibStub("Masque", true)
 
 local GetCVar = C_CVar.GetCVar
