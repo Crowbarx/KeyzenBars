@@ -212,6 +212,8 @@ local WINDOWS = {
 	{ text = "Friends", run = "ToggleFriendsFrame", icon = "INV_Letter_02" },
 	{ text = "Group finder", buttons = { "LFDMicroButton" }, icon = "Spell_Holy_PrayerOfHealing" },
 	{ text = "Collections", buttons = { "CollectionsMicroButton" }, icon = "Ability_Mount_RidingHorse" },
+	{ text = "Adventure guide", buttons = { "EJMicroButton" }, icon = "INV_Misc_Book_17" },
+	{ text = "Housing", buttons = { "HousingMicroButton" }, icon = "INV_Misc_Rune_01" },
 	{ text = "Game menu", buttons = { "MainMenuMicroButton" }, icon = "Trade_Engineering" },
 	{ text = "Keyzen Bars", slash = "kz", cmd = "KEYZENBARS", icon = "INV_Misc_Key_03",
 		texture = "Interface\\AddOns\\KeyzenBars\\Media\\Icon.tga" },
