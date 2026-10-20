@@ -753,10 +753,24 @@ local function ApplyLooks(icon, border, bg)
 	bg:SetShown(DB.showBackground)
 end
 
+-- Unlocked buttons ignore mouse clicks so spells can be moved without
+-- casting them. A click is also how a spell on the cursor gets put down (a
+-- drop onto a full button leaves its old spell on the cursor), so clicks go
+-- through while the cursor holds something.
+local function MouseBlocked()
+	return (not DB.lockButtons and not DB.clickWhenUnlocked and not GetCursorInfo()) or nil
+end
+
+local function UpdateMouseBlock()
+	if InCombatLockdown() then pending.settings = true return end
+	local blockMouse = MouseBlocked()
+	for _, button in pairs(buttons) do button:SetAttribute("kzBlockMouse", blockMouse) end
+end
+
 local function UpdateButtonSettings()
 	if InCombatLockdown() then pending.settings = true return end
 	local keyDown = GetCVarBool("ActionButtonUseKeyDown")
-	local blockMouse = (not DB.lockButtons and not DB.clickWhenUnlocked) or nil
+	local blockMouse = MouseBlocked()
 	local textFont = FontPath(DB.textFont)
 	local ic = DB.interactionColor
 	local labelPoint = LABEL_POINTS[DB.keyPosition] or LABEL_POINTS.TOPRIGHT
@@ -1388,7 +1402,7 @@ for _, event in ipairs({ "ADDON_LOADED", "PLAYER_LOGIN", "PLAYER_REGEN_ENABLED",
 	"UPDATE_BINDINGS", "CVAR_UPDATE", "UPDATE_SHAPESHIFT_FORMS", "UPDATE_SHAPESHIFT_FORM",
 	"UPDATE_SHAPESHIFT_USABLE", "SPELLS_CHANGED", "SPELL_ACTIVATION_OVERLAY_GLOW_SHOW",
 	"SPELL_ACTIVATION_OVERLAY_GLOW_HIDE", "PLAYER_ENTERING_WORLD", "EDIT_MODE_LAYOUTS_UPDATED",
-	"LEARNED_SPELL_IN_SKILL_LINE", "LEARNED_SPELL_IN_TAB" }) do
+	"LEARNED_SPELL_IN_SKILL_LINE", "LEARNED_SPELL_IN_TAB", "CURSOR_CHANGED", "CURSOR_UPDATE" }) do
 	pcall(events.RegisterEvent, events, event) -- not every client has every event
 end
 events:SetScript("OnEvent", function(_, event, arg1)
@@ -1425,6 +1439,8 @@ events:SetScript("OnEvent", function(_, event, arg1)
 		for _, button in pairs(buttons) do UpdateGlow(button) end
 	elseif event == "PLAYER_ENTERING_WORLD" or event == "EDIT_MODE_LAYOUTS_UPDATED" then
 		if ns.LayoutMenus then ns.LayoutMenus() end
+	elseif event == "CURSOR_CHANGED" or event == "CURSOR_UPDATE" then
+		UpdateMouseBlock()
 	elseif event == "UPDATE_BINDINGS" then
 		-- Normal keybinds changed: re-check which keys flip bar pages. Our own
 		-- override calls also fire this event, so only act on a real change.
