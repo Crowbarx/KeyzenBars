@@ -1445,6 +1445,15 @@ local function Init()
 	DB.keyzen.device = ns.ACTIVE_LAYOUT == ns.DEVICE_LAYOUTS.cyborg2 and "cyborg2" or "keyzen"
 	ns.KEYS, ns.FIXED = ns.ACTIVE_LAYOUT.keys, ns.ACTIVE_LAYOUT.fixed
 	DB.keys = MergeKeys(DB.keys)
+	if DB.keyzen.device == "cyborg2" and not DB.keyzen.cyborgFiveBindInitialized then
+		for _, def in ipairs(ns.KEYS) do
+			if def.name == "5" then
+				if not DB.keys[def.id] or DB.keys[def.id] == "" then DB.keys[def.id] = def.key end
+				break
+			end
+		end
+		DB.keyzen.cyborgFiveBindInitialized = true
+	end
 	ns.DB = DB
 
 	bindOwner = CreateFrame("Frame", "KeyzenBarsBindOwner", UIParent)

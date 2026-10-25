@@ -74,7 +74,7 @@ for _, def in ipairs(ns.NAGA) do def.bar = "naga" end
 
 local cyborgKeys = {}
 local cyborgReach = 0
-local function AddCyborgKey(joyLabel, c, r, mainIndex)
+local function AddCyborgKey(joyLabel, c, r, mainIndex, defaultKey)
 	local bar, index, slot
 	if mainIndex then
 		bar, index = "main", mainIndex
@@ -84,7 +84,7 @@ local function AddCyborgKey(joyLabel, c, r, mainIndex)
 	end
 	cyborgKeys[#cyborgKeys + 1] = {
 		id = 200 + #cyborgKeys + 1, c = c, r = r, bar = bar, i = index, slot = slot,
-		key = "", name = joyLabel:gsub("^JOY ", ""),
+		key = defaultKey or "", name = joyLabel:gsub("^JOY ", ""),
 		deviceName = "Cyborg II " .. joyLabel .. " (row " .. r .. ", column " .. c .. ")",
 	}
 end
@@ -104,7 +104,7 @@ AddCyborgKey("JOY 6", 2, 4, 6)
 AddCyborgKey("JOY 7", 3, 4, 7)
 AddCyborgKey("JOY 8", 4, 4, 8)
 AddCyborgKey("JOY 9", 5, 4, 9)
-AddCyborgKey("JOY 5", 6, 4, 5)
+	AddCyborgKey("JOY 5", 6, 4, 5, "5")
 AddCyborgKey("JOY LEFT", 7, 3)
 AddCyborgKey("JOY 20", 8, 3)
 AddCyborgKey("JOY RIGHT", 9, 3)
