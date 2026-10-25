@@ -6,6 +6,7 @@ Action bars laid out like the Azeron Keyzen keypad, for WoW Forever (Interface 1
 
 - **Keyzen bar:** buttons placed where the keys sit on the Azeron Keyzen, with finger labels and an Alt layer for the reach keys.
 - **Naga grid:** a 12-button grid for a Razer Naga side panel.
+- **Azeron Cyborg II and Cyro:** bars laid out like Azeron's own software shows them, with each button's Azeron number until you bind it. Turn one on under Bars, then bind with /kb.
 - **Stance bar and extra bars:** add as many bars as you like, each with its own size, spacing, fading and bar page.
 - **Its own keybinds:** hover a button and press a key, straight from the bar. Shift no longer flips your bar page by accident.
 - **Blizzard's bars hidden:** the micro menu and bag bar are moved into movable Keyzen bars with orientation, size and fading options.

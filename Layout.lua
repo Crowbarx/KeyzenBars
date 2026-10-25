@@ -66,3 +66,69 @@ ns.NAGA = {
 	{ id = 112, n = 12, c = 3, r = 4, key = "NUMPADPLUS",    slot = 48 },
 }
 for _, def in ipairs(ns.NAGA) do def.bar = "naga" end
+
+-- Other Azeron devices, drawn like Azeron's own software shows them (right
+-- hand: fingers on the left, thumb on the right). `n` is the button number
+-- Azeron's software shows. Nothing is bound by default: the keys each
+-- player gives these buttons in Azeron's software differ, so they're bound
+-- here with /kb. Buttons fill action pages in three groups: `g = 1` is the
+-- home keys and pages with stances and forms like the main bar.
+-- `fixed` cells are drawn for buttons that stay the mouse.
+ns.DEVICES = {
+	{
+		key = "cyborg2", title = "Cyborg II", base = 2000, cols = 9, rows = 6,
+		buttons = {
+			-- Finger towers, pinky to index. Row 4 is where the fingers rest.
+			{ n = 3,  c = 2, r = 3, g = 1 }, { n = 7,  c = 3, r = 3, g = 1 },
+			{ n = 11, c = 4, r = 3, g = 1 }, { n = 16, c = 5, r = 3, g = 1 },
+			{ n = 2,  c = 2, r = 4, g = 1 }, { n = 6,  c = 3, r = 4, g = 1 },
+			{ n = 10, c = 4, r = 4, g = 1 }, { n = 15, c = 5, r = 4, g = 1 },
+			{ n = 1,  c = 2, r = 5, g = 1 }, { n = 5,  c = 3, r = 5, g = 1 },
+			{ n = 9,  c = 4, r = 5, g = 1 }, { n = 14, c = 5, r = 5, g = 1 },
+			{ n = 4,  c = 2, r = 2, g = 2 }, { n = 8,  c = 3, r = 2, g = 2 },
+			{ n = 12, c = 4, r = 2, g = 2 }, { n = 17, c = 5, r = 2, g = 2 },
+			{ n = 37, c = 2, r = 6, g = 2 }, { n = 38, c = 3, r = 6, g = 2 },
+			{ n = 13, c = 4, r = 6, g = 2 }, { n = 18, c = 5, r = 6, g = 2 },
+			{ n = 36, c = 1, r = 4, g = 2 }, { n = 19, c = 6, r = 4, g = 2 },
+			-- Thumb: the 5-way switch, the stick's click and the keys around it.
+			{ n = 41, c = 9, r = 4, g = 2 }, { n = 20, c = 9, r = 5, g = 2 },
+			{ n = 28, c = 8, r = 1, g = 3 }, { n = 29, c = 7, r = 2, g = 3 },
+			{ n = 22, c = 8, r = 2, g = 3 }, { n = 31, c = 9, r = 2, g = 3 },
+			{ n = 30, c = 8, r = 3, g = 3 }, { n = 24, c = 7.5, r = 4.5, g = 3 },
+			{ n = 23, c = 7, r = 6, g = 3 },
+		},
+	},
+	{
+		key = "cyro", title = "Cyro", base = 2100, cols = 8, rows = 6,
+		buttons = {
+			-- Finger buttons, index to pinky.
+			{ n = 4,  c = 4, r = 3, g = 1 }, { n = 3,  c = 5, r = 3, g = 1 },
+			{ n = 2,  c = 6, r = 3, g = 1 }, { n = 1,  c = 7, r = 3, g = 1 },
+			{ n = 8,  c = 4, r = 4, g = 1 }, { n = 7,  c = 5, r = 4, g = 1 },
+			{ n = 6,  c = 6, r = 4, g = 1 }, { n = 5,  c = 7, r = 4, g = 1 },
+			{ n = 10, c = 7, r = 5, g = 1 }, { n = 9,  c = 8, r = 5, g = 1 },
+			{ n = 17, c = 5, r = 6, g = 1 }, { n = 16, c = 6, r = 6, g = 1 },
+			{ n = 15, c = 7, r = 6, g = 2 }, { n = 14, c = 8, r = 6, g = 2 },
+			-- Thumb: the 5-way switch, the stick's click and the key below it.
+			{ n = 28, c = 2, r = 1, g = 2 }, { n = 29, c = 1, r = 2, g = 2 },
+			{ n = 20, c = 2, r = 2, g = 2 }, { n = 31, c = 3, r = 2, g = 2 },
+			{ n = 30, c = 2, r = 3, g = 2 }, { n = 24, c = 2.5, r = 4.5, g = 2 },
+			{ n = 22, c = 2, r = 6, g = 2 },
+		},
+		fixed = {
+			{ c = 4, r = 5, label = "Wheel" },
+			{ c = 5, r = 5, label = "LMB" },
+			{ c = 6, r = 5, label = "RMB" },
+		},
+	},
+}
+for _, device in ipairs(ns.DEVICES) do
+	local count = {}
+	for i, def in ipairs(device.buttons) do
+		def.bar = "device"
+		def.device = device.key
+		def.id = device.base + i
+		count[def.g] = (count[def.g] or 0) + 1
+		def.i = count[def.g] -- place on its group's page
+	end
+end

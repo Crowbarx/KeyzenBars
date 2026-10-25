@@ -718,6 +718,9 @@ local function BarChoices()
 		{ value = "keyzen", text = "Keyzen" },
 		{ value = "naga", text = "Naga" },
 	}
+	for _, device in ipairs(ns.DEVICES) do
+		list[#list + 1] = { value = device.key, text = "Azeron " .. device.title }
+	end
 	for n in ipairs(DB.extra) do
 		list[#list + 1] = { value = "extra" .. n, text = ns.ExtraBarName(n) }
 	end
@@ -872,6 +875,26 @@ local function BarsDisplay(view)
 		function() return DB.keyzen.mainPage or 1 end, function(v) DB.keyzen.mainPage = v end, { width = 200 })
 	Dropdown(s, "Reach keys page", "The Alt keys.", PageChoices,
 		function() return DB.keyzen.reachPage or 6 end, function(v) DB.keyzen.reachPage = v end, { width = 200 })
+
+	local function Device()
+		for _, device in ipairs(ns.DEVICES) do
+			if device.key == selectedBar then return device end
+		end
+	end
+	-- Getters fall back to defaults because these refresh while hidden too.
+	local function Pages() return (Device() and Bar().pages) or {} end
+	s = Section(view, "Azeron buttons", function() return Device() ~= nil end)
+	Dropdown(s, "Main buttons page", "The 12 keys your fingers rest on. Stances and forms swap it like the default main bar.",
+		PageChoices, function() return Pages()[1] or 1 end, function(v) Pages()[1] = v end, { width = 200 })
+	Dropdown(s, "Second page", "The rest of the finger keys and thumb keys.",
+		PageChoices, function() return Pages()[2] or 6 end, function(v) Pages()[2] = v end, { width = 200 })
+	Dropdown(s, "Thumb page", "Cyborg II: the 5-way switch, stick click and the key below the stick.",
+		PageChoices, function() return Pages()[3] or 3 end, function(v) Pages()[3] = v end,
+		{ width = 200, disabled = function() return not (Device() and Device().key == "cyborg2") end })
+	Toggle(s, "Left-handed", "Mirror the layout for a left-handed keypad.",
+		function() return Device() and Bar().mirror end, function(v) Bar().mirror = v end)
+	ActionRow(s, "Bind the buttons", "Hover a button and press the key your Azeron sends for it. Also /kb.",
+		"Start binding", function() window:Hide() ns.SetBindMode(true) end)
 
 	s = Section(view, "Naga buttons", function() return selectedBar == "naga" end)
 	Dropdown(s, "Action page", "The action slots the 12 buttons show.", PageChoices,

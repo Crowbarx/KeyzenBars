@@ -152,6 +152,16 @@ for _, f in ipairs({
 end
 ns.MEDIA = MEDIA
 
+-- Other Azeron devices (Layout.lua): hidden until picked, three action
+-- pages for their button groups.
+for _, device in ipairs(ns.DEVICES) do
+	local cfg = BarDefaults(0, 0)
+	cfg.show = false
+	cfg.pages = { 1, 6, 3 }
+	cfg.mirror = false
+	DEFAULTS.bars[device.key] = cfg
+end
+
 local function SharedMedia() return LibStub("LibSharedMedia-3.0", true) end
 
 -- Every font to offer: ours, then LibSharedMedia's (keys "lsm:<name>").
@@ -257,6 +267,13 @@ ns.BarDB = BarDB
 -- Labels
 ------------------------------------------------------------------------------
 
+function ns.DeviceTitle(key)
+	for _, device in ipairs(ns.DEVICES) do
+		if device.key == key then return device.title end
+	end
+	return key
+end
+
 local function ShortKey(key)
 	if not key or key == "" then return "" end
 	return (key:gsub("ALT%-", "A"):gsub("CTRL%-", "C"):gsub("SHIFT%-", "S"))
@@ -266,12 +283,15 @@ end
 -- default numpad key.
 local function KeyLabel(def, key)
 	if def.bar == "naga" and key == def.key then return tostring(def.n) end
+	-- Unbound device buttons show Azeron's number so they're easy to find.
+	if def.bar == "device" and (not key or key == "") then return "#" .. def.n end
 	if def.name and DB.fingerNames and key == def.key then return def.name end
 	return ShortKey(key)
 end
 
 local function KeyName(def)
 	if def.bar == "naga" then return "Naga " .. def.n end
+	if def.bar == "device" then return ns.DeviceTitle(def.device) .. " #" .. def.n end
 	if def.bar == "extra" then return ns.ExtraBarName(def.extra) .. " button " .. def.i end
 	return "Key #" .. def.id
 end
@@ -488,19 +508,23 @@ local function SlotFor(def)
 	if def.bar == "main" then return ((DB.keyzen.mainPage or 1) - 1) * 12 + def.i end
 	if def.bar == "reach" then return ((DB.keyzen.reachPage or 6) - 1) * 12 + (def.slot - 60) end
 	if def.bar == "naga" then return ((DB.bars.naga.page or 4) - 1) * 12 + (def.slot - 36) end
+	if def.bar == "device" then return ((DB.bars[def.device].pages[def.g] or 1) - 1) * 12 + def.i end
 	return def.slot
 end
 
+-- Buttons that swap pages for stances and forms like the default main bar.
+local function IsPaged(def)
+	return def.bar == "main" or (def.bar == "device" and def.g == 1)
+end
+
 local function ApplySlots()
-	for _, list in ipairs({ ns.KEYS, ns.NAGA }) do
+	local lists = { ns.KEYS, ns.NAGA }
+	for _, device in ipairs(ns.DEVICES) do lists[#lists + 1] = device.buttons end
+	for _, list in ipairs(lists) do
 		for _, def in ipairs(list) do
 			local button = buttons[def.id]
-			if button and def.bar ~= "main" then button:SetState(0, "action", SlotFor(def)) end
+			if button then button:SetState(IsPaged(def) and 1 or 0, "action", SlotFor(def)) end
 		end
-	end
-	for _, def in ipairs(ns.KEYS) do
-		local button = buttons[def.id]
-		if button and def.bar == "main" then button:SetState(1, "action", SlotFor(def)) end
 	end
 end
 
@@ -517,13 +541,13 @@ local function CreateButton(def, header)
 	if button.cooldown and button.cooldown.SetCountdownFont then
 		button.cooldown:SetCountdownFont("KeyzenBarsCooldownFont")
 	end
-	if def.bar == "main" then
+	if IsPaged(def) then
 		for page = 1, 18 do
 			button:SetState(page, "action", (page - 1) * 12 + def.i)
 		end
 		button:SetState(0, "action", SlotFor(def))
 		button:SetState(1, "action", SlotFor(def))
-	elseif def.slot then
+	elseif def.slot or def.bar == "device" then
 		button:SetState(0, "action", SlotFor(def))
 	end
 	-- With buttons unlocked and "cast on click" off, a mouse click does
@@ -563,7 +587,7 @@ local function MakeFixedCell(def, parent)
 	text:SetText(def.label)
 	cell:SetAlpha(def.faint and 0.15 or 0.7)
 	cell.kzDef = def
-	fixedCells[#fixedCells + 1] = cell
+	return cell
 end
 
 ------------------------------------------------------------------------------
@@ -649,6 +673,7 @@ local function ButtonActive(def)
 		return DB.bars.keyzen.show and DB.keyzen.showReach
 	end
 	if def.bar == "naga" then return DB.bars.naga.show end
+	if def.bar == "device" then return DB.bars[def.device].show end
 	if def.bar == "extra" then
 		local cfg = DB.extra[def.extra]
 		return cfg and cfg.show and def.i <= cfg.count
@@ -864,6 +889,22 @@ local function LayoutNaga()
 	end
 end
 
+local deviceCells = {} -- [device key] = { fixed label cells }
+
+local function LayoutDevice(device)
+	local holder, cfg = holders[device.key], DB.bars[device.key]
+	local size, step = cfg.size, cfg.size + cfg.spacing
+	holder:SetSize(device.cols * step - cfg.spacing, device.rows * step - cfg.spacing)
+	-- Left-handed devices are the mirror image.
+	local function X(c) return ((cfg.mirror and device.cols + 1 - c or c) - 1) * step end
+	for _, def in ipairs(device.buttons) do
+		Place(buttons[def.id], holder, X(def.c), -(def.r - 1) * step, size)
+	end
+	for _, cell in ipairs(deviceCells[device.key]) do
+		Place(cell, holder, X(cell.kzDef.c), -(cell.kzDef.r - 1) * step, size)
+	end
+end
+
 local function LayoutExtra(n)
 	local cfg = DB.extra[n]
 	local holder = holders["extra" .. n]
@@ -975,6 +1016,10 @@ local function Refresh()
 	end
 	ApplySlots()
 	RegisterStateDriver(headers.Main, "page", MainPageCondition())
+	for _, device in ipairs(ns.DEVICES) do
+		RegisterStateDriver(headers[device.key .. "Paged"], "page", MainPageCondition())
+		LayoutDevice(device)
+	end
 	LayoutKeyzen()
 	LayoutNaga()
 	LayoutStances()
@@ -1044,7 +1089,7 @@ ns.PROFILE_MODULES = {
 	{ key = "behavior", text = "Behavior", fields = { "lockFrames", "lockButtons", "clickWhenUnlocked",
 		"blockShiftPaging", "disableFormPaging", "hideBlizzard", "autoAddSpells" } },
 	{ key = "bars", text = "Bars", desc = "Positions, sizes, fading and extra bars.",
-		fields = { "bars.keyzen", "bars.naga", "bars.stance", "keyzen", "extra" } },
+		fields = { "bars.keyzen", "bars.naga", "bars.cyborg2", "bars.cyro", "bars.stance", "keyzen", "extra" } },
 	{ key = "keys", text = "Keybinds", fields = { "keys" } },
 	{ key = "buttons", text = "Buttons", fields = { "borderSize", "borderColor", "iconZoom", "showBackground",
 		"bgColor", "hideEmpty", "cooldownNumbers", "cooldownFontSize", "swipeAlpha", "rangeColoring", "rangeColor",
@@ -1164,6 +1209,11 @@ local function OpenSlots()
 	if DB.bars.naga.show then
 		for _, def in ipairs(ns.NAGA) do slots[#slots + 1] = SlotFor(def) end
 	end
+	for _, device in ipairs(ns.DEVICES) do
+		if DB.bars[device.key].show then
+			for _, def in ipairs(device.buttons) do slots[#slots + 1] = SlotFor(def) end
+		end
+	end
 	for _, cfg in ipairs(DB.extra) do
 		if cfg.show and cfg.kind ~= "bag" then
 			for i = 1, cfg.count do slots[#slots + 1] = (cfg.page - 1) * 12 + i end
@@ -1231,6 +1281,12 @@ end
 local function FreePage()
 	local used = { [DB.keyzen.mainPage or 1] = true, [DB.keyzen.reachPage or 6] = true, [DB.bars.naga.page or 4] = true }
 	for _, cfg in ipairs(DB.extra) do if cfg.page then used[cfg.page] = true end end
+	for _, device in ipairs(ns.DEVICES) do
+		local cfg = DB.bars[device.key]
+		if cfg.show then
+			for g = 1, 3 do used[cfg.pages[g] or 0] = true end
+		end
+	end
 	for _, page in ipairs({ 2, 3, 5 }) do
 		if not used[page] then return page end
 	end
@@ -1364,12 +1420,27 @@ local function Init()
 		control:ChildUpdate("state", newstate)
 	]])
 	local reach = CreateHeader("Reach", keyzen)
-	for _, def in ipairs(ns.FIXED) do MakeFixedCell(def, keyzen) end
+	for _, def in ipairs(ns.FIXED) do fixedCells[#fixedCells + 1] = MakeFixedCell(def, keyzen) end
 	for _, def in ipairs(ns.KEYS) do CreateButton(def, def.bar == "main" and main or reach) end
 
 	local naga = CreateHolder("naga", "Naga")
 	local nagaHeader = CreateHeader("Naga", naga)
 	for _, def in ipairs(ns.NAGA) do CreateButton(def, nagaHeader) end
+
+	for _, device in ipairs(ns.DEVICES) do
+		local holder = CreateHolder(device.key, device.title)
+		local paged = CreateHeader(device.key .. "Paged", holder)
+		paged:SetAttribute("_onstate-page", [[
+			self:SetAttribute("state", newstate)
+			control:ChildUpdate("state", newstate)
+		]])
+		local rest = CreateHeader(device.key, holder)
+		for _, def in ipairs(device.buttons) do CreateButton(def, def.g == 1 and paged or rest) end
+		deviceCells[device.key] = {}
+		for _, def in ipairs(device.fixed or {}) do
+			table.insert(deviceCells[device.key], MakeFixedCell(def, holder))
+		end
+	end
 
 	CreateStanceBar()
 	if DB.ownMenus and ns.CreateMenus then ns.CreateMenus() end
