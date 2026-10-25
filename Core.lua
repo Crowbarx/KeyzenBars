@@ -83,7 +83,7 @@ local DEFAULTS = {
 	},
 	ownMenus = true,
 	autoAddSpells = true,
-	keyzen = { showMain = true, showReach = true, showFixed = true, showFar = false, showThumb = false,
+	keyzen = { device = "keyzen", showMain = true, showReach = true, showFixed = true, showFar = false, showThumb = false,
 		mainPage = 1, reachPage = 6 },
 	extra = {},
 
@@ -259,6 +259,9 @@ ns.BarDB = BarDB
 
 local function ShortKey(key)
 	if not key or key == "" then return "" end
+	if key == "SPACE" then return "Space" end
+	if key == "TAB" then return "Tab" end
+	if key == "ESCAPE" then return "Esc" end
 	return (key:gsub("ALT%-", "A"):gsub("CTRL%-", "C"):gsub("SHIFT%-", "S"))
 end
 
@@ -273,6 +276,7 @@ end
 local function KeyName(def)
 	if def.bar == "naga" then return "Naga " .. def.n end
 	if def.bar == "extra" then return ns.ExtraBarName(def.extra) .. " button " .. def.i end
+	if def.deviceName then return def.deviceName end
 	return "Key #" .. def.id
 end
 
@@ -283,7 +287,7 @@ end
 -- Keyzen grid: column 7 is a half-width gap between fingers and thumb.
 local function CellPoint(c, r, step)
 	local x = (c - 1) * step
-	if c >= 8 then x = x - step / 2 end
+	if ns.ACTIVE_LAYOUT.halfGap ~= false and c >= 8 then x = x - step / 2 end
 	return x, -(r - 1) * step
 end
 
@@ -491,16 +495,71 @@ local function SlotFor(def)
 	return def.slot
 end
 
+local function SetActionState(button, state, slot)
+	local stateKey = tostring(state)
+	if button:GetAttribute("gse-lab-state-" .. stateKey) then
+		if button.gseLabOriginal then
+			button.gseLabOriginal[stateKey] = { kind = "action", action = slot }
+		end
+		return
+	end
+	button:SetState(state, "action", slot)
+end
+
+local SPECIAL_ACTION_INDEX = {}
+for index, key in ipairs({ "4", "3", "2", "1", "5", "6", "7", "8", "9", "0", "-", "=" }) do
+	SPECIAL_ACTION_INDEX[key] = index
+end
+
+local function SpecialActionIndex(def)
+	local key = DB.keys[def.id]
+	local index = key and SPECIAL_ACTION_INDEX[key]
+	if index then return index end
+	if (not key or key == "") and def.name then return SPECIAL_ACTION_INDEX[def.name] end
+end
+
+local VEHICLE_EXIT_SPECIAL_STATE = {
+	func = function()
+		local button = _G.KeyzenBarsVehicleExit
+		if button then button:Click() end
+	end,
+	tooltip = "Leave vehicle",
+	texture = "Interface\\Vehicles\\UI-Vehicles-Button-Exit-Up",
+}
+
+local function IsSpecialBarPage(page)
+	return page == 11
+		or (GetVehicleBarIndex and page == GetVehicleBarIndex())
+		or (GetOverrideBarIndex and page == GetOverrideBarIndex())
+end
+
 local function ApplySlots()
 	for _, list in ipairs({ ns.KEYS, ns.NAGA }) do
 		for _, def in ipairs(list) do
 			local button = buttons[def.id]
-			if button and def.bar ~= "main" then button:SetState(0, "action", SlotFor(def)) end
+			if button and def.bar ~= "main" then SetActionState(button, 0, SlotFor(def)) end
 		end
 	end
 	for _, def in ipairs(ns.KEYS) do
 		local button = buttons[def.id]
-		if button and def.bar == "main" then button:SetState(1, "action", SlotFor(def)) end
+		if button and def.bar == "main" then SetActionState(button, 1, SlotFor(def)) end
+	end
+	for _, def in ipairs(ns.KEYS) do
+		local button = buttons[def.id]
+		if button then
+			local actionIndex = SpecialActionIndex(def)
+			for page = 1, 18 do
+				if IsSpecialBarPage(page) then
+					if actionIndex then
+						SetActionState(button, page, (page - 1) * 12 + actionIndex)
+					elseif def.name == "17" then
+						button:SetState(page, "custom", VEHICLE_EXIT_SPECIAL_STATE)
+					else
+						SetActionState(button, page, SlotFor(def))
+					end
+				end
+			end
+		end
 	end
 end
 
@@ -523,6 +582,13 @@ local function CreateButton(def, header)
 		end
 		button:SetState(0, "action", SlotFor(def))
 		button:SetState(1, "action", SlotFor(def))
+	elseif def.bar == "reach" then
+		local index = def.slot - 60
+		for page = 1, 18 do
+			button:SetState(page, "action", (page - 1) * 12 + index)
+		end
+		button:SetState(0, "action", SlotFor(def))
+		button:SetState(1, "action", SlotFor(def))
 	elseif def.slot then
 		button:SetState(0, "action", SlotFor(def))
 	end
@@ -542,6 +608,7 @@ local function MainPageCondition()
 	if GetOverrideBarIndex and GetVehicleBarIndex then
 		cond = format("[overridebar] %d; [vehicleui][possessbar] %d; ", GetOverrideBarIndex(), GetVehicleBarIndex())
 	end
+	cond = cond .. "[bonusbar:5] 11; "
 	if GetTempShapeshiftBarIndex then
 		cond = cond .. format("[shapeshift] %d; ", GetTempShapeshiftBarIndex())
 	end
@@ -550,7 +617,15 @@ local function MainPageCondition()
 	if class == "PRIEST" then cond = cond .. "[form:1] 7; " end
 	-- Stances, forms and stealth swap the main bar like the default UI does.
 	-- No [bar:N] here on purpose: Shift paging never moves this bar.
-	return cond .. "[bonusbar:1] 7; [bonusbar:2] 8; [bonusbar:3] 9; [bonusbar:4] 10; [bonusbar:5] 11; 1"
+	return cond .. "[bonusbar:1] 7; [bonusbar:2] 8; [bonusbar:3] 9; [bonusbar:4] 10; 1"
+end
+
+local function ReachPageCondition()
+	local cond = ""
+	if GetOverrideBarIndex and GetVehicleBarIndex then
+		cond = format("[overridebar] %d; [vehicleui][possessbar] %d; ", GetOverrideBarIndex(), GetVehicleBarIndex())
+	end
+	return cond .. "[bonusbar:5] 11; " .. tostring(DB.keyzen.reachPage or 6)
 end
 
 local function MakeFixedCell(def, parent)
@@ -817,6 +892,8 @@ local function UpdateButtonSettings()
 
 		local label = button.kzLabel
 		label:SetFont(FontPath(DB.keyFont), DB.keyFontSize, "OUTLINE")
+		label:SetWidth(math.max(1, button:GetWidth() - 4))
+		label:SetWordWrap(false)
 		label:SetTextColor(unpack(DB.keyColor))
 		label:ClearAllPoints()
 		label:SetPoint(labelPoint[1], labelPoint[2], labelPoint[3])
@@ -838,7 +915,8 @@ end
 local function LayoutKeyzen()
 	local holder, cfg = holders.keyzen, DB.bars.keyzen
 	local size, step = cfg.size, cfg.size + cfg.spacing
-	holder:SetSize(CellPoint(10, 1, step) + size, 6 * step - cfg.spacing)
+	holder:SetSize(CellPoint(ns.ACTIVE_LAYOUT.columns, 1, step) + size,
+		ns.ACTIVE_LAYOUT.rows * step - cfg.spacing)
 	for _, def in ipairs(ns.KEYS) do
 		local button = buttons[def.id]
 		local x, y = CellPoint(def.c, def.r, step)
@@ -975,6 +1053,7 @@ local function Refresh()
 	end
 	ApplySlots()
 	RegisterStateDriver(headers.Main, "page", MainPageCondition())
+	RegisterStateDriver(headers.Reach, "page", ReachPageCondition())
 	LayoutKeyzen()
 	LayoutNaga()
 	LayoutStances()
@@ -1155,10 +1234,7 @@ local function OpenSlots()
 	local slots = {}
 	if DB.bars.keyzen.show then
 		for _, def in ipairs(ns.KEYS) do
-			if def.bar == "main" and ButtonActive(def) then slots[#slots + 1] = SlotFor(def) end
-		end
-		for _, def in ipairs(ns.KEYS) do
-			if def.bar == "reach" and ButtonActive(def) then slots[#slots + 1] = SlotFor(def) end
+			if ButtonActive(def) then slots[#slots + 1] = SlotFor(def) end
 		end
 	end
 	if DB.bars.naga.show then
@@ -1310,6 +1386,7 @@ local function OnCaptureKey(_, key)
 		DB.keys[id] = combo
 		Print(KeyName(defsById[id]) .. " is now " .. combo .. ".")
 	end
+	ApplySlots()
 	ApplyBindings()
 	if button:IsMouseOver() then button:GetScript("OnEnter")(button) end
 end
@@ -1325,22 +1402,34 @@ local function DefaultKeys()
 	return keys
 end
 
+local function KnownKeyIds()
+	local ids = {}
+	for _, layout in pairs(ns.DEVICE_LAYOUTS) do
+		for _, def in ipairs(layout.keys) do ids[def.id] = true end
+	end
+	for _, def in ipairs(ns.NAGA) do ids[def.id] = true end
+	return ids
+end
+
 -- Keep saved keys, fill in defaults for buttons that didn't have one, and
 -- drop keys of Keyzen buttons that no longer exist. Extra bar ids are > 1000.
 local function MergeKeys(saved)
 	local keys = DefaultKeys()
+	local known = KnownKeyIds()
 	for id, key in pairs(saved or {}) do
-		if keys[id] ~= nil or id > 1000 then keys[id] = key end
+		if known[id] or id > 1000 then keys[id] = key end
 	end
 	return keys
 end
 
 function ns.ResetKeys()
 	local keys = DefaultKeys()
+	local known = KnownKeyIds()
 	for id, key in pairs(DB.keys) do
-		if id > 1000 then keys[id] = key end
+		if id > 1000 or (known[id] and keys[id] == nil) then keys[id] = key end
 	end
 	DB.keys = keys
+	ApplySlots()
 	ApplyBindings()
 	Print("Keyzen and Naga keys reset to the plan defaults.")
 end
@@ -1351,6 +1440,9 @@ local function Init()
 	root.profileKeys[CharKey()] = ActiveProfile(root)
 	MigrateOldSettings(DB)
 	DeepDefaults(DB, DEFAULTS)
+	ns.ACTIVE_LAYOUT = ns.DEVICE_LAYOUTS[DB.keyzen.device] or ns.DEVICE_LAYOUTS.keyzen
+	DB.keyzen.device = ns.ACTIVE_LAYOUT == ns.DEVICE_LAYOUTS.cyborg2 and "cyborg2" or "keyzen"
+	ns.KEYS, ns.FIXED = ns.ACTIVE_LAYOUT.keys, ns.ACTIVE_LAYOUT.fixed
 	DB.keys = MergeKeys(DB.keys)
 	ns.DB = DB
 
@@ -1364,6 +1456,10 @@ local function Init()
 		control:ChildUpdate("state", newstate)
 	]])
 	local reach = CreateHeader("Reach", keyzen)
+	reach:SetAttribute("_onstate-page", [[
+		self:SetAttribute("state", newstate)
+		control:ChildUpdate("state", newstate)
+	]])
 	for _, def in ipairs(ns.FIXED) do MakeFixedCell(def, keyzen) end
 	for _, def in ipairs(ns.KEYS) do CreateButton(def, def.bar == "main" and main or reach) end
 

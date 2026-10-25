@@ -1,10 +1,10 @@
 # Keyzen Bars
 
-Action bars laid out like the Azeron Keyzen keypad, for WoW Forever (Interface 16001).
+Action bars laid out for Azeron Keyzen and Cyborg II keypads, for WoW Forever (Interface 16001).
 
 ## What it does
 
-- **Keyzen bar:** buttons placed where the keys sit on the Azeron Keyzen, with finger labels and an Alt layer for the reach keys.
+- **Azeron layouts:** choose the Keyzen or Cyborg II layout in the Keyzen keys options. Both layouts support hover-to-bind; Cyborg II starts unbound because its keys are user-configurable.
 - **Naga grid:** a 12-button grid for a Razer Naga side panel.
 - **Stance bar and extra bars:** add as many bars as you like, each with its own size, spacing, fading and bar page.
 - **Its own keybinds:** hover a button and press a key, straight from the bar. Shift no longer flips your bar page by accident.

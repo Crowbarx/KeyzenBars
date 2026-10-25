@@ -857,21 +857,31 @@ local function BarsDisplay(view)
 	Slider(s, "Scale", nil, function() return Bar().scale end, function(v) Bar().scale = v end,
 		0.5, 2, 0.05, { percent = true })
 
-	s = Section(view, "Keyzen keys", function() return selectedBar == "keyzen" end)
-	Toggle(s, "Main keys", "The 12 plain keys.",
+	s = Section(view, "Azeron keys", function() return selectedBar == "keyzen" end)
+	Dropdown(s, "Device layout", "Choose Keyzen or Cyborg II, then reload the UI to rebuild the key positions.", {
+		{ value = "keyzen", text = "Keyzen" },
+		{ value = "cyborg2", text = "Cyborg II" },
+	}, function() return DB.keyzen.device or "keyzen" end, function(v)
+		DB.keyzen.device = v
+	end)
+	Toggle(s, "Main keys", "The 12 primary buttons.",
 		function() return DB.keyzen.showMain end, function(v) DB.keyzen.showMain = v end)
-	Toggle(s, "Reach keys", "The Alt keys. Off frees them.",
+	Toggle(s, "Reach keys", "The secondary Azeron keys, on their own action page.",
 		function() return DB.keyzen.showReach end, function(v) DB.keyzen.showReach = v end)
+	Dropdown(s, "Main keys page", "Stances and forms still swap it like the default main bar.", PageChoices,
+		function() return DB.keyzen.mainPage or 1 end, function(v) DB.keyzen.mainPage = v end, { width = 200 })
+	Dropdown(s, "Reach keys page", "The Alt keys.", PageChoices,
+		function() return DB.keyzen.reachPage or 6 end, function(v) DB.keyzen.reachPage = v end, { width = 200 })
+
+	s = Section(view, "Keyzen layout", function()
+		return selectedBar == "keyzen" and DB.keyzen.device ~= "cyborg2"
+	end)
 	Toggle(s, "Far row (U1, U2, U3)", "Off frees them for panels.",
 		function() return DB.keyzen.showFar end, function(v) DB.keyzen.showFar = v end)
 	Toggle(s, "Thumb keys (T1, T2)", nil,
 		function() return DB.keyzen.showThumb end, function(v) DB.keyzen.showThumb = v end)
 	Toggle(s, "Tab and Esc labels", nil,
 		function() return DB.keyzen.showFixed end, function(v) DB.keyzen.showFixed = v end)
-	Dropdown(s, "Main keys page", "Stances and forms still swap it like the default main bar.", PageChoices,
-		function() return DB.keyzen.mainPage or 1 end, function(v) DB.keyzen.mainPage = v end, { width = 200 })
-	Dropdown(s, "Reach keys page", "The Alt keys.", PageChoices,
-		function() return DB.keyzen.reachPage or 6 end, function(v) DB.keyzen.reachPage = v end, { width = 200 })
 
 	s = Section(view, "Naga buttons", function() return selectedBar == "naga" end)
 	Dropdown(s, "Action page", "The action slots the 12 buttons show.", PageChoices,
