@@ -596,7 +596,8 @@ local function CreateButton(def, header)
 	-- nothing, so spells can be dragged around without firing. Keybinds
 	-- arrive as the "Keybind" button and always cast.
 	SecureHandlerWrapScript(button, "OnClick", header, [[
-		if button ~= "Keybind" and self:GetAttribute("kzBlockMouse") then return false end
+		if button ~= "Keybind" and self:GetAttribute("kzBlockMouse")
+			and not (self:GetAttribute("gse-secure") and self:GetAttribute("type") == "click") then return false end
 	]])
 	StyleButton(button, def)
 	buttons[def.id] = button
