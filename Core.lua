@@ -762,7 +762,21 @@ local function IsActive(button)
 	return ok and on
 end
 
+-- Stances and forms get a wash over the icon; other active actions such as
+-- auto attack or a queued Heroic Strike only get the colored border.
+local function IsFormButton(button)
+	if not (GetNumShapeshiftForms and button:HasAction()) then return false end
+	local ok, spell = pcall(button.GetSpellId, button)
+	if not ok or not spell then return false end
+	for i = 1, GetNumShapeshiftForms() do
+		if select(4, GetShapeshiftFormInfo(i)) == spell then return true end
+	end
+	return false
+end
+
 local function UpdateBorderColor(button)
+	local checked = button.kzStates and button.kzStates.GetCheckedTexture
+	if checked then checked:SetAlpha(IsFormButton(button) and 1 or 0) end
 	local c = DB.borderColor
 	if DB.showEquipped and button:HasAction() and button:IsEquipped() then c = DB.equippedColor end
 	if DB.activeHighlight and IsActive(button) then c = DB.activeColor end
@@ -839,9 +853,8 @@ local function UpdateButtonSettings()
 		UpdateBorderColor(button)
 		for getter, tex in pairs(button.kzStates) do
 			if getter == "GetCheckedTexture" then
-				-- The colored border already marks active actions; a wash over
-				-- the icon just muddies its colors.
-				tex:SetColorTexture(0, 0, 0, 0)
+				local a = DB.activeColor
+				tex:SetColorTexture(a[1], a[2], a[3], DB.activeHighlight and 0.25 or 0)
 			else
 				local style = getter == "GetPushedTexture" and DB.pushedStyle or DB.highlightStyle
 				tex:SetColorTexture(ic[1], ic[2], ic[3], STRENGTH[style] or 0.2)
