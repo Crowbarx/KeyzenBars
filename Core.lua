@@ -407,6 +407,13 @@ local function StyleButton(button, def)
 		end
 	end
 
+	-- The red auto attack flash is sized for Blizzard's own buttons; fit it
+	-- to ours so it stays centered.
+	if button.Flash then
+		button.Flash:ClearAllPoints()
+		button.Flash:SetAllPoints(icon)
+	end
+
 	button.kzBorder, button.kzBg = AddBorder(button, { 0, 0, 0 }, 0.06)
 	button.kzGlow = AddGlow(button)
 
