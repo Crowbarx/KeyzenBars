@@ -839,8 +839,9 @@ local function UpdateButtonSettings()
 		UpdateBorderColor(button)
 		for getter, tex in pairs(button.kzStates) do
 			if getter == "GetCheckedTexture" then
-				local a = DB.activeColor
-				tex:SetColorTexture(a[1], a[2], a[3], DB.activeHighlight and 0.25 or 0)
+				-- The colored border already marks active actions; a wash over
+				-- the icon just muddies its colors.
+				tex:SetColorTexture(0, 0, 0, 0)
 			else
 				local style = getter == "GetPushedTexture" and DB.pushedStyle or DB.highlightStyle
 				tex:SetColorTexture(ic[1], ic[2], ic[3], STRENGTH[style] or 0.2)
