@@ -740,6 +740,7 @@ end
 -- Main keys follow Blizzard's main bar only while both sit on the same page,
 -- so in a vehicle, override bar or after Shift paging they go back to ours.
 local function ApplyHoldPaged(paged)
+	if not holdOwner then return end
 	local code = { "KEYS = newtable()" }
 	for _, p in ipairs(paged) do
 		code[#code + 1] = format("KEYS[%q] = newtable(%q, %q)", p[1], p[2], p[3])
