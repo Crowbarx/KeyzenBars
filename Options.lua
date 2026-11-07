@@ -767,6 +767,10 @@ local function GeneralBehavior(view)
 		function() return GetCVarBool("enableMouseoverCast") end,
 		function(v) SetCVar("enableMouseoverCast", v and "1" or "0") end,
 		{ disabled = function() return GetCVar("enableMouseoverCast") == nil end })
+	Toggle(s, "Press and hold casting", "Hold a key to keep casting. Needs the key's page on a Blizzard bar.",
+		function() return GetCVarBool("ActionButtonUseKeyHeldSpell") end,
+		function(v) SetCVar("ActionButtonUseKeyHeldSpell", v and "1" or "0") end,
+		{ disabled = function() return GetCVar("ActionButtonUseKeyHeldSpell") == nil end })
 
 	s = Section(view, "Paging")
 	Toggle(s, "Block Shift page switching", "Stops Shift+1-6 and Shift+wheel.",

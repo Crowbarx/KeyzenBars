@@ -687,18 +687,98 @@ local function ButtonActive(def)
 	end
 end
 
+------------------------------------------------------------------------------
+-- Press and hold casting. The game only repeats a held key through its own
+-- action bar bindings, so with that option on, a key whose action slot one of
+-- Blizzard's hidden bars also holds is bound to that bar's command instead.
+------------------------------------------------------------------------------
+
+local HOLD_BARS = {
+	[3] = { "MULTIACTIONBAR3BUTTON", "MultiBarRight" },
+	[4] = { "MULTIACTIONBAR4BUTTON", "MultiBarLeft" },
+	[5] = { "MULTIACTIONBAR2BUTTON", "MultiBarBottomRight" },
+	[6] = { "MULTIACTIONBAR1BUTTON", "MultiBarBottomLeft" },
+	[13] = { "MULTIACTIONBAR5BUTTON", "MultiBar5" },
+	[14] = { "MULTIACTIONBAR6BUTTON", "MultiBar6" },
+	[15] = { "MULTIACTIONBAR7BUTTON", "MultiBar7" },
+}
+local holdOwner
+local holdButtons = {} -- Blizzard button -> ours, for the pressed look
+
+local function HoldCastOn()
+	return GetCVar("ActionButtonUseKeyHeldSpell") == "1"
+end
+
+-- The Blizzard command that casts the same slot as this button, whether it
+-- only matches while the main bar is on its usual page, and that bar's button.
+local function HoldCommand(def, button)
+	if IsPaged(def) then
+		if DB.disableFormPaging or def.i > 12 then return end
+		local base = def.bar == "main" and (DB.keyzen.mainPage or 1) or (DB.bars[def.device].pages[1] or 1)
+		local blizz = _G["ActionButton" .. def.i]
+		if base ~= 1 or not blizz then return end
+		return "ACTIONBUTTON" .. def.i, true, blizz
+	end
+	if button:GetAttribute("labtype-0") ~= "action" then return end
+	local slot = tonumber(button:GetAttribute("labaction-0"))
+	if not slot then return end
+	local bar = HOLD_BARS[math.floor((slot - 1) / 12) + 1]
+	local frame = bar and _G[bar[2]]
+	local i = (slot - 1) % 12 + 1
+	local blizz = frame and type(frame.actionButtons) == "table" and frame.actionButtons[i]
+	if not blizz then return end
+	return bar[1] .. i, false, blizz
+end
+
+local function HoldPress(blizz, down)
+	local button = blizz and holdButtons[blizz]
+	if not button then return end
+	button:SetButtonState(down and "PUSHED" or "NORMAL")
+	if down and DB.flash then button.kzFlash:Stop() button.kzFlash:Play() end
+end
+
+-- Main keys follow Blizzard's main bar only while both sit on the same page,
+-- so in a vehicle, override bar or after Shift paging they go back to ours.
+local function ApplyHoldPaged(paged)
+	local code = { "KEYS = newtable()" }
+	for _, p in ipairs(paged) do
+		code[#code + 1] = format("KEYS[%q] = newtable(%q, %q)", p[1], p[2], p[3])
+	end
+	holdOwner:Execute(table.concat(code, "\n"))
+	UnregisterStateDriver(holdOwner, "hold")
+	holdOwner:SetAttribute("state-hold", "init")
+	if #paged > 0 then
+		RegisterStateDriver(holdOwner, "hold",
+			"[overridebar][vehicleui][possessbar][shapeshift][petbattle] off; [bar:2][bar:3][bar:4][bar:5][bar:6] off; on")
+	end
+end
+
 local function ApplyBindings()
 	if InCombatLockdown() then pending.bindings = true return end
 	lastPagingSignature = PagingKeySignature()
 	ClearOverrideBindings(bindOwner)
-	local used = {}
+	wipe(holdButtons)
+	local used, paged = {}, {}
+	local hold = HoldCastOn()
 	for id, button in pairs(buttons) do
 		local key = DB.keys[id]
 		if key and key ~= "" and ButtonActive(defsById[id]) then
 			used[key] = true
-			SetOverrideBindingClick(bindOwner, true, key, button:GetName(), "Keybind")
+			local command, isPaged, blizz
+			if hold then command, isPaged, blizz = HoldCommand(defsById[id], button) end
+			if not command then
+				SetOverrideBindingClick(bindOwner, true, key, button:GetName(), "Keybind")
+			else
+				holdButtons[blizz] = button
+				if isPaged then
+					paged[#paged + 1] = { key, command, button:GetName() }
+				else
+					SetOverrideBinding(bindOwner, true, key, command)
+				end
+			end
 		end
 	end
+	ApplyHoldPaged(paged)
 	if DB.blockShiftPaging then
 		for _, command in ipairs(PAGE_COMMANDS) do
 			for _, key in ipairs({ GetBindingKey(command) }) do
@@ -1432,6 +1512,30 @@ local function Init()
 	ns.DB = DB
 
 	bindOwner = CreateFrame("Frame", "KeyzenBarsBindOwner", UIParent)
+	holdOwner = CreateFrame("Frame", "KeyzenBarsHoldOwner", UIParent, "SecureHandlerStateTemplate")
+	holdOwner:SetAttribute("_onstate-hold", [[
+		self:ClearBindings()
+		if not KEYS then return end
+		for key, bind in pairs(KEYS) do
+			if newstate == "on" then
+				self:SetBinding(true, key, bind[1])
+			else
+				self:SetBindingClick(true, key, bind[2], "Keybind")
+			end
+		end
+	]])
+	if ActionButtonDown then
+		hooksecurefunc("ActionButtonDown", function(id) HoldPress(_G["ActionButton" .. id], true) end)
+		hooksecurefunc("ActionButtonUp", function(id) HoldPress(_G["ActionButton" .. id], false) end)
+	end
+	if MultiActionButtonDown then
+		local function BarButton(bar, id)
+			local frame = _G[bar]
+			return frame and type(frame.actionButtons) == "table" and frame.actionButtons[id]
+		end
+		hooksecurefunc("MultiActionButtonDown", function(bar, id) HoldPress(BarButton(bar, id), true) end)
+		hooksecurefunc("MultiActionButtonUp", function(bar, id) HoldPress(BarButton(bar, id), false) end)
+	end
 	CreateFrame("Button", "KeyzenBarsNoop", UIParent, "SecureActionButtonTemplate")
 
 	local keyzen = CreateHolder("keyzen", "Keyzen")
@@ -1542,6 +1646,8 @@ events:SetScript("OnEvent", function(_, event, arg1)
 		if PagingKeySignature() ~= lastPagingSignature then ApplyBindings() end
 	elseif event == "CVAR_UPDATE" and (arg1 == "ActionButtonUseKeyDown" or arg1 == "enableMouseoverCast") then
 		UpdateButtonSettings()
+	elseif event == "CVAR_UPDATE" and arg1 == "ActionButtonUseKeyHeldSpell" then
+		ApplyBindings()
 	end
 end)
 
