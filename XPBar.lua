@@ -100,10 +100,25 @@ local function Session()
 	return elapsed, rate, s and s.gained or 0
 end
 
--- XP of quests in the log, split by done (ready to hand in) and not yet.
+-- Quests on the watch list (the tracker). Nil when the client can't tell,
+-- and then every finished quest counts.
+local function TrackedQuests()
+	local QL = C_QuestLog
+	if not (QL and QL.GetNumQuestWatches and QL.GetQuestIDForQuestWatchIndex) then return nil end
+	local set = {}
+	for i = 1, QL.GetNumQuestWatches() do
+		local q = QL.GetQuestIDForQuestWatchIndex(i)
+		if q then set[q] = true end
+	end
+	return set
+end
+
+-- XP of quests in the log, and of tracked quests ready to hand in.
 local function ScanQuests()
 	local total, complete = 0, 0
 	local QL = C_QuestLog
+	local ok, tracked = pcall(TrackedQuests)
+	if not ok then tracked = nil end
 	if GetQuestLogRewardXP and QL and QL.GetNumQuestLogEntries then
 		for i = 1, QL.GetNumQuestLogEntries() do
 			local ok, id, xp, done = pcall(function()
@@ -118,7 +133,7 @@ local function ScanQuests()
 			end)
 			if ok and id and xp > 0 then
 				total = total + xp
-				if done then complete = complete + xp end
+				if done and (not tracked or tracked[id]) then complete = complete + xp end
 			end
 		end
 	end
@@ -329,7 +344,7 @@ local function Tooltip(self)
 	GameTooltip:AddDoubleLine("Current", string.format("%s / %s", Long(cur), Long(max)), 1, 1, 1, 1, 1, 1)
 	GameTooltip:AddDoubleLine("To go", Long(math.max(0, max - cur)), 1, 1, 1, 1, 1, 1)
 	GameTooltip:AddDoubleLine("Rested", Long(rested), 1, 1, 1, RESTED_COLOR[1], RESTED_COLOR[2], RESTED_COLOR[3])
-	GameTooltip:AddDoubleLine("Quests ready to hand in", Long(state.complete), 1, 1, 1, QUEST_COLOR[1], QUEST_COLOR[2], QUEST_COLOR[3])
+	GameTooltip:AddDoubleLine("Tracked quests ready", Long(state.complete), 1, 1, 1, QUEST_COLOR[1], QUEST_COLOR[2], QUEST_COLOR[3])
 	GameTooltip:AddDoubleLine("All quests in log", Long(state.quest), 1, 1, 1, QUEST_COLOR[1], QUEST_COLOR[2], QUEST_COLOR[3])
 	GameTooltip:AddDoubleLine("Gained this session", Long(gained), 1, 1, 1, 1, 1, 1)
 	GameTooltip:AddDoubleLine("Session", Time(elapsed), 1, 1, 1, 1, 1, 1)
@@ -480,7 +495,7 @@ end
 
 local events = CreateFrame("Frame")
 for _, e in ipairs({ "PLAYER_ENTERING_WORLD", "PLAYER_XP_UPDATE", "PLAYER_LEVEL_UP", "TIME_PLAYED_MSG",
-	"QUEST_LOG_UPDATE", "UPDATE_EXHAUSTION", "PLAYER_UPDATE_RESTING", "DISABLE_XP_GAIN", "ENABLE_XP_GAIN" }) do
+	"QUEST_LOG_UPDATE", "QUEST_WATCH_LIST_CHANGED", "UPDATE_EXHAUSTION", "PLAYER_UPDATE_RESTING", "DISABLE_XP_GAIN", "ENABLE_XP_GAIN" }) do
 	pcall(events.RegisterEvent, events, e)
 end
 events:SetScript("OnEvent", function(_, event, a1, a2)
@@ -514,7 +529,7 @@ events:SetScript("OnEvent", function(_, event, a1, a2)
 		for _, cf in ipairs(muted) do cf:RegisterEvent("TIME_PLAYED_MSG") end
 		wipe(muted)
 		Draw()
-	elseif event == "QUEST_LOG_UPDATE" then
+	elseif event == "QUEST_LOG_UPDATE" or event == "QUEST_WATCH_LIST_CHANGED" then
 		QueueQuests()
 	else
 		Draw()
