@@ -754,17 +754,23 @@ local function ApplyHoldPaged(paged)
 	end
 end
 
+-- "SHIFT-1" -> "1"
+local function BaseKey(key)
+	for _, mod in ipairs({ "ALT%-", "CTRL%-", "SHIFT%-", "META%-" }) do key = key:gsub("^" .. mod, "") end
+	return key
+end
+
 local function ApplyBindings()
 	if InCombatLockdown() then pending.bindings = true return end
 	lastPagingSignature = PagingKeySignature()
 	ClearOverrideBindings(bindOwner)
 	wipe(holdButtons)
-	local used, paged = {}, {}
+	local used, paged, commands = {}, {}, {}
 	local hold = HoldCastOn()
 	for id, button in pairs(buttons) do
 		local key = DB.keys[id]
 		if key and key ~= "" and ButtonActive(defsById[id]) then
-			used[key] = true
+			used[key] = button
 			local command, isPaged, blizz
 			if hold then command, isPaged, blizz = HoldCommand(defsById[id], button) end
 			if not command then
@@ -775,6 +781,7 @@ local function ApplyBindings()
 					paged[#paged + 1] = { key, command, button:GetName() }
 				else
 					SetOverrideBinding(bindOwner, true, key, command)
+					commands[key] = command
 				end
 			end
 		end
@@ -784,7 +791,16 @@ local function ApplyBindings()
 		for _, command in ipairs(PAGE_COMMANDS) do
 			for _, key in ipairs({ GetBindingKey(command) }) do
 				if not used[key] then
-					SetOverrideBindingClick(bindOwner, true, key, "KeyzenBarsNoop")
+					-- Shift+1 on our "1" key still casts it (so [mod:shift]
+					-- macros work); on other keys it just does nothing.
+					local base = BaseKey(key)
+					if commands[base] then
+						SetOverrideBinding(bindOwner, true, key, commands[base])
+					elseif used[base] then
+						SetOverrideBindingClick(bindOwner, true, key, used[base]:GetName(), "Keybind")
+					else
+						SetOverrideBindingClick(bindOwner, true, key, "KeyzenBarsNoop")
+					end
 				end
 			end
 		end
