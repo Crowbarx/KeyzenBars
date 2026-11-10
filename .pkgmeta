@@ -7,3 +7,4 @@ ignore:
   - .gitignore
   - .pkgmeta
   - Screenshots
+  - extras

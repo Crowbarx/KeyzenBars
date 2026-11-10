@@ -19,3 +19,14 @@ jobs:
           fetch-depth: 0
 
       - uses: BigWigsMods/packager@v2
+
+      # The wallpaper folder is a separate download: shipped inside Keyzen
+      # Bars, every update would delete the pictures players add to it.
+      - name: Upload the starter wallpaper folder
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd extras
+          zip -r ../BBB_Wallpaper-starter.zip BBB_Wallpaper
+          cd ..
+          gh release upload "${GITHUB_REF_NAME}" BBB_Wallpaper-starter.zip --clobber

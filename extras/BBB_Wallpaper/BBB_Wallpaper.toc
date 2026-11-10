@@ -1,0 +1,5 @@
+## Interface: 16001, 120105
+## Title: BBB Wallpaper
+## Notes: Your own pictures for the Keyzen Bars, The BBB and Gear Guru wallpaper themes. Lives outside those addons so updates never delete it.
+
+List.lua

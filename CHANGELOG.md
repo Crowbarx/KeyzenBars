@@ -2,7 +2,7 @@
 
 ## 1.0.10
 
-- New Wallpaper theme for the options window: your own pictures from an AddOns\BBB_Wallpaper folder (shared with The BBB and Gear Guru), one picked or Shuffle all.
+- New Wallpaper theme for the options window: your own pictures from an AddOns\BBB_Wallpaper folder (shared with The BBB and Gear Guru), one picked or Shuffle all. Get the folder from BBB_Wallpaper-starter.zip on the GitHub release.
 - XP bar textures now include every bar texture shared through LibSharedMedia.
 
 ## 1.0.2

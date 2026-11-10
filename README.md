@@ -31,17 +31,13 @@ Action bars laid out like the Azeron Keyzen keypad, for WoW Forever (Interface 1
 
 ## Wallpapers
 
-The Wallpaper theme shows your own pictures behind the options window, the same set The BBB and Gear Guru use. Make an addon folder `Interface\AddOns\BBB_Wallpaper` with a `BBB_Wallpaper.toc` that loads a `List.lua`, and in it list your pictures:
+The Wallpaper theme shows your own pictures behind the options window, the same set The BBB and Gear Guru use. They live in a small addon folder of their own, `Interface\AddOns\BBB_Wallpaper`, so Keyzen Bars updates never delete them.
 
-```lua
-BBB_WALLPAPERS = {
-  { file = "Wallpaper.tga", name = "My picture" },
-}
--- Pictures only Keyzen Bars shows:
-KEYZEN_WALLPAPERS = {}
-```
+1. Download `BBB_Wallpaper-starter.zip` from the [latest GitHub release](https://github.com/Crowbarx/KeyzenBars/releases/latest).
+2. Unzip it into your `Interface\AddOns` folder, next to `KeyzenBars`, and restart the game.
+3. In Keyzen's options, open General > This window and set Theme to Wallpaper.
 
-Each picture is a 2048x1024 .tga with the image in the left 1521 px. Pick one in Options > General > This window, or choose Shuffle all for a new one each time the window opens. The folder sits outside Keyzen Bars, so updates never delete it.
+To add your own pictures, save each as a 2048x1024 .tga with the image in the left 1521 px, put it in the `BBB_Wallpaper` folder, and add a line for it in `List.lua`. Choose Shuffle all for a new picture each time the window opens.
 
 ## Commands
 
