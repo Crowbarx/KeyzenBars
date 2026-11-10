@@ -14,7 +14,6 @@ local FOOTER = 66
 local PAD = 32
 local ROW_H = 52
 local GAP = 2
-local ART_W, ART_H = 734, 1000 -- OptionsBackground.png
 
 local FONT_BOLD = ns.MEDIA .. "Fonts\\Montserrat-Bold.ttf"
 local FONT_MED = ns.MEDIA .. "Fonts\\Montserrat-Medium.ttf"
@@ -45,19 +44,70 @@ local function Accent()
 	return DB.optAccent
 end
 
--- Window themes, like EllesmereUI's and Polestar's. Sylvanas is only offered
--- when this copy has her art.
-local SYLVANAS = ns.MEDIA .. "OptionsBackground.png"
+-- Window themes, like EllesmereUI's and Polestar's. "Wallpaper" shows your
+-- own pictures, the same ones The BBB and Gear Guru use: a folder addon at
+-- Interface\AddOns\BBB_Wallpaper whose List.lua names them (BBB_WALLPAPERS,
+-- plus KEYZEN_WALLPAPERS for pictures only Keyzen shows). Each picture is a
+-- 2048x1024 .tga with the image in the left 1521 px. It lives outside this
+-- addon, so updates never delete it.
+local WALL_DIR = "Interface\\AddOns\\BBB_Wallpaper\\"
 local THEMES = {
-	{ value = "sylvanas", text = "Sylvanas", personal = true },
 	{ value = "classcolor", text = "Class colored" },
 	{ value = "midnight", text = "Midnight" },
 	{ value = "dark", text = "Dark" },
+	{ value = "wallpaper", text = "Wallpaper" },
 }
+
+local function Wallpapers()
+	local list = {}
+	for _, source in ipairs({ KEYZEN_WALLPAPERS or false, BBB_WALLPAPERS or false }) do
+		if type(source) == "table" then
+			for _, w in ipairs(source) do
+				if type(w) == "table" and type(w.file) == "string" then
+					list[#list + 1] = { value = w.file, text = w.name or w.file, file = w.file }
+				end
+			end
+		end
+	end
+	return list
+end
+
+-- Shuffle: a different picture each time the window opens (no timers).
+local shuffled
+local function ShuffleWallpaper()
+	local list = Wallpapers()
+	if #list < 2 then shuffled = 1 return end
+	local pick
+	repeat pick = math.random(#list) until pick ~= shuffled
+	shuffled = pick
+end
+
+local function CurrentWallpaper()
+	local list = Wallpapers()
+	if DB.optWallpaper == "shuffle" then
+		if not shuffled or not list[shuffled] then ShuffleWallpaper() end
+		return list[shuffled] or list[1]
+	end
+	for _, w in ipairs(list) do
+		if w.file == DB.optWallpaper then return w end
+	end
+	return list[1]
+end
+
+local function WallpaperChoices()
+	local list = Wallpapers()
+	if #list < 2 then return list end
+	local out = { { value = "shuffle", text = "Shuffle all" } }
+	for _, w in ipairs(list) do out[#out + 1] = w end
+	return out
+end
+
+local function HasWallpapers() return #Wallpapers() > 0 end
+
 local function ThemeChoices()
 	local list = {}
 	for _, t in ipairs(THEMES) do
-		if not t.personal or ns.HAS_SYLVANAS then list[#list + 1] = t end
+		if t.value ~= "wallpaper" or HasWallpapers() then list[#list + 1] = t end
 	end
 	return list
 end
@@ -810,9 +860,19 @@ local function GeneralWindow(view)
 		function(v) DB.optClassAccent = v end)
 	ColorRow(s, "Accent color", "Used when class color accent is off.", function() return DB.optAccent end,
 		function(c) DB.optAccent = c end, nil, { disabled = function() return DB.optClassAccent end })
-	-- Only the Sylvanas theme has art, so the slider only shows in copies with it.
-	if ns.HAS_SYLVANAS then
-		Slider(s, "Background image", "How much of the art shows.", function() return DB.optArtAlpha end,
+	-- Only the Wallpaper theme has a picture, so these show when you have some.
+	if HasWallpapers() then
+		Dropdown(s, "Wallpaper", "Pick one, or shuffle for a new one each time this opens.", WallpaperChoices,
+			function()
+				if DB.optWallpaper == "shuffle" then return "shuffle" end
+				local w = CurrentWallpaper()
+				return w and w.file
+			end,
+			function(v)
+				if v == "shuffle" then ShuffleWallpaper() end
+				DB.optWallpaper = v
+			end, { width = 190, disabled = function() return DB.optTheme ~= "wallpaper" end })
+		Slider(s, "Background image", "How much of the picture shows.", function() return DB.optArtAlpha end,
 			function(v) DB.optArtAlpha = v end, 0, 1, 0.05, { percent = true, reserve = 260 })
 	end
 	Slider(s, "Panel darkness", "Lower lets more world through.", function() return DB.optTint end,
@@ -1129,7 +1189,7 @@ local function XPPage(view)
 	Toggle(s, "Hide Blizzard's XP bar", nil, Get("hideBlizzard"), Set("hideBlizzard"))
 
 	s = Section(view, "Look")
-	Dropdown(s, "Texture", nil, ns.XP_TEXTURES, Get("texture"), Set("texture"), { width = 170 })
+	Dropdown(s, "Texture", nil, ns.XPTextureChoices, Get("texture"), Set("texture"), { width = 170 })
 	Toggle(s, "Class gradient", "Deep to bright in your class color. Off uses the color here.", Get("classColor"), Set("classColor"),
 		{ color = { Get("color"), Set("color") } })
 	Slider(s, "Track darkness", nil, Get("trackAlpha"), Set("trackAlpha"), 0, 1, 0.05, { percent = true })
@@ -1394,16 +1454,18 @@ local function CreateWindow()
 	local appliedTheme
 	local function ApplyTheme()
 		local theme = DB.optTheme
-		if theme == "class" or (theme == "sylvanas" and not ns.HAS_SYLVANAS) then theme = "classcolor" end
-		if theme == appliedTheme then return end
-		appliedTheme = theme
+		local picture = theme == "wallpaper" and CurrentWallpaper()
+		if theme == "class" or (theme == "wallpaper" and not picture) then theme = "classcolor" end
+		local applied = theme .. (picture and picture.file or "")
+		if applied == appliedTheme then return end
+		appliedTheme = applied
 		art:Show()
 		wash:Hide()
-		grain:SetShown(theme ~= "sylvanas")
+		grain:SetShown(not picture)
 		local cr, cg, cb = ClassRGB()
 		cr, cg, cb = cr or 0.5, cg or 0.5, cb or 0.5
-		if theme == "sylvanas" then
-			Crop(SYLVANAS, ART_W, ART_H, 0, 1, 0, 1, 0.06 / (1 - (ART_W / WIDTH * HEIGHT) / ART_H))
+		if picture then
+			Crop(WALL_DIR .. picture.file, 1521, 1024, 0, 1521 / 2048, 0, 1)
 		elseif theme == "classcolor" then
 			art:Hide()
 			Gradient(cr * 0.04, cg * 0.04, cb * 0.04, 1, cr * 0.32, cg * 0.32, cb * 0.32, 1)
@@ -1753,7 +1815,7 @@ local function CreateWindow()
 		function(v) DB.optContentScale = v end, 0.5, 1.2, 0.05, ApplyContentScale)
 	scaleSlider:SetPoint("TOPRIGHT", sizeSlider, "BOTTOMRIGHT", 0, -6)
 	scaleSlider:SetFrameLevel(drag:GetFrameLevel() + 2)
-	if ns.HAS_SYLVANAS then
+	if HasWallpapers() then
 		local artSlider = HeaderSlider(root, "Background", function() return DB.optArtAlpha end,
 			function(v) DB.optArtAlpha = v end, 0, 1, 0.05)
 		artSlider:SetPoint("TOPRIGHT", scaleSlider, "BOTTOMRIGHT", 0, -6)
@@ -1770,7 +1832,13 @@ local function CreateWindow()
 		wash:SetAlpha(art:IsShown() and 1 or DB.optTint)
 	end
 
-	root:SetScript("OnShow", function() ShowPage(currentPage) end)
+	root:SetScript("OnShow", function()
+		if DB.optWallpaper == "shuffle" and DB.optTheme == "wallpaper" then
+			ShuffleWallpaper()
+			ApplyTheme()
+		end
+		ShowPage(currentPage)
+	end)
 	root:SetScript("OnHide", CloseMenu)
 	window:Hide()
 end

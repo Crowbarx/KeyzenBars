@@ -15,7 +15,7 @@ Action bars laid out like the Azeron Keyzen keypad, for WoW Forever (Interface 1
 - **New spells on your bars:** spells you learn drop onto the first empty button. This can be switched off.
 - **Experience bar:** a class gradient bar with time this level, played and session time, XP per hour, time to level, kills to level, quest XP ready to hand in, and rested XP.
 - **Profiles:** share one setup across characters, or copy single modules between profiles.
-- **Options window:** type /kz. It has a settings search, themes (class colored, Midnight and Dark), window size and scale sliders, and opacity sliders.
+- **Options window:** type /kz. It has a settings search, themes (class colored, Midnight, Dark, and Wallpaper for your own pictures), window size and scale sliders, and opacity sliders.
 
 ## Screenshots
 
@@ -28,6 +28,20 @@ Action bars laid out like the Azeron Keyzen keypad, for WoW Forever (Interface 1
 ![Button settings, Midnight theme](Screenshots/05-options-buttons-midnight.png)
 ![Window settings, Midnight theme](Screenshots/08-options-window-midnight.png)
 ![Window buttons, Dark theme](Screenshots/09-options-menu-bags.png)
+
+## Wallpapers
+
+The Wallpaper theme shows your own pictures behind the options window, the same set The BBB and Gear Guru use. Make an addon folder `Interface\AddOns\BBB_Wallpaper` with a `BBB_Wallpaper.toc` that loads a `List.lua`, and in it list your pictures:
+
+```lua
+BBB_WALLPAPERS = {
+  { file = "Wallpaper.tga", name = "My picture" },
+}
+-- Pictures only Keyzen Bars shows:
+KEYZEN_WALLPAPERS = {}
+```
+
+Each picture is a 2048x1024 .tga with the image in the left 1521 px. Pick one in Options > General > This window, or choose Shuffle all for a new one each time the window opens. The folder sits outside Keyzen Bars, so updates never delete it.
 
 ## Commands
 

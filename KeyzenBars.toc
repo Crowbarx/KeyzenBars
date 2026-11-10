@@ -4,6 +4,7 @@
 ## Author: Eric
 ## Version: @project-version@
 ## SavedVariables: KeyzenBarsDB
+## OptionalDeps: BBB_Wallpaper, EllesmereUIToxi, LibSharedMedia-3.0
 ## X-Curse-Project-ID: 1751764
 ## Category: Action Bars
 ## IconTexture: Interface\AddOns\KeyzenBars\Media\Icon.tga

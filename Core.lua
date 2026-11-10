@@ -94,6 +94,7 @@ local DEFAULTS = {
 	optTint = 0.35,
 	optAccent = { 0.89, 0.67, 0.44, 1 },
 	optTheme = "classcolor",
+	optWallpaper = "shuffle", -- a picture's file name, or "shuffle"
 	optClassAccent = true,
 }
 
@@ -223,9 +224,28 @@ local function DeepDefaults(target, defaults)
 	end
 end
 
+-- Fonts and bar textures the personal build shipped now come from
+-- EllesmereUI ToxiUI through LibSharedMedia.
+local LEGACY_FONTS = { toxi = "lsm:Toxi: ToxiUI", noodle = "lsm:Toxi: Big Noodle" }
+local LEGACY_TEXTURES = { clean = "lsm:Toxi: ToxiUI Clean", grad = "lsm:Toxi: Mid", g1 = "lsm:Toxi: Left",
+	kmt = "lsm:Toxi: KMT47 (ToxiUI default)" }
+
 -- Settings from the first test versions lived at the top level.
 local function MigrateOldSettings(db)
 	db.bars = db.bars or {}
+	-- The personal build's Sylvanas art is now a wallpaper (BBB_Wallpaper).
+	if db.optTheme == "sylvanas" then
+		db.optTheme = "wallpaper"
+		db.optWallpaper = db.optWallpaper or "Sylvanas.tga"
+	end
+	for _, key in ipairs({ "keyFont", "textFont" }) do
+		if LEGACY_FONTS[db[key]] then db[key] = LEGACY_FONTS[db[key]] end
+	end
+	local xp = db.bars.xp
+	if type(xp) == "table" then
+		if LEGACY_FONTS[xp.font] then xp.font = LEGACY_FONTS[xp.font] end
+		if LEGACY_TEXTURES[xp.texture] then xp.texture = LEGACY_TEXTURES[xp.texture] end
+	end
 	if db.point then db.bars.keyzen = db.bars.keyzen or { point = db.point } db.point = nil end
 	if db.nagaPoint then db.bars.naga = db.bars.naga or { point = db.nagaPoint } db.nagaPoint = nil end
 	if db.stancePoint then db.bars.stance = db.bars.stance or { point = db.stancePoint } db.stancePoint = nil end
@@ -1219,7 +1239,7 @@ ns.PROFILE_MODULES = {
 	{ key = "menus", text = "Utility bars", fields = { "ownMenus", "bars.menu", "bars.bags", "bars.totem", "bars.pet", "bars.vehicle" } },
 	{ key = "xp", text = "Experience", fields = { "bars.xp" } },
 	{ key = "window", text = "Options window", fields = { "optContentScale", "optWindowSize", "optArtAlpha",
-		"optTint", "optAccent", "optTheme", "optClassAccent" } },
+		"optTint", "optAccent", "optTheme", "optClassAccent", "optWallpaper" } },
 }
 
 local function CopyField(from, to, path)

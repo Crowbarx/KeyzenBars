@@ -144,12 +144,28 @@ end
 -- Drawing
 ------------------------------------------------------------------------------
 
+-- Ours, then every bar texture other addons share through LibSharedMedia
+-- (keys "lsm:<name>").
+function ns.XPTextureChoices()
+	local list = {}
+	for _, t in ipairs(ns.XP_TEXTURES) do list[#list + 1] = t end
+	local lsm = LibStub and LibStub("LibSharedMedia-3.0", true)
+	if lsm then
+		for _, name in ipairs(lsm:List("statusbar")) do
+			list[#list + 1] = { value = "lsm:" .. name, text = name, file = lsm:Fetch("statusbar", name, true) }
+		end
+	end
+	return list
+end
+
 local function Texture()
 	local key = Cfg().texture
 	for _, t in ipairs(ns.XP_TEXTURES) do
 		if t.value == key then return t.file end
 	end
-	return ns.XP_TEXTURES[1].file
+	local name = type(key) == "string" and key:match("^lsm:(.+)$")
+	local lsm = name and LibStub and LibStub("LibSharedMedia-3.0", true)
+	return (lsm and lsm:Fetch("statusbar", name, true)) or ns.XP_TEXTURES[1].file
 end
 
 local function Colors()

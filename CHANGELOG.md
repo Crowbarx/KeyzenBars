@@ -1,5 +1,10 @@
 # Keyzen Bars
 
+## 1.0.10
+
+- New Wallpaper theme for the options window: your own pictures from an AddOns\BBB_Wallpaper folder (shared with The BBB and Gear Guru), one picked or Shuffle all.
+- XP bar textures now include every bar texture shared through LibSharedMedia.
+
 ## 1.0.2
 
 - Pet bar: Blizzard's pet buttons become a movable Keyzen bar, shown while you have a pet.
