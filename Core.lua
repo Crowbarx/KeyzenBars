@@ -83,6 +83,7 @@ local DEFAULTS = {
 	},
 	ownMenus = true,
 	autoAddSpells = true,
+	specBars = true,
 	keyzen = { showMain = true, showReach = true, showFixed = true, showFar = false, showThumb = false,
 		mainPage = 1, reachPage = 6 },
 	extra = {},
@@ -1225,7 +1226,7 @@ end
 -- What each module covers, as paths into a profile.
 ns.PROFILE_MODULES = {
 	{ key = "behavior", text = "Behavior", fields = { "lockFrames", "lockButtons", "clickWhenUnlocked",
-		"blockShiftPaging", "disableFormPaging", "hideBlizzard", "autoAddSpells" } },
+		"blockShiftPaging", "disableFormPaging", "hideBlizzard", "autoAddSpells", "specBars" } },
 	{ key = "bars", text = "Bars", desc = "Positions, sizes, fading and extra bars.",
 		fields = { "bars.keyzen", "bars.naga", "bars.cyborg2", "bars.cyro", "bars.stance", "keyzen", "extra" } },
 	{ key = "keys", text = "Keybinds", fields = { "keys" } },
@@ -1394,6 +1395,8 @@ local function FlushSpells()
 	if not DB.autoAddSpells or InCombatLockdown() then return end
 	local list = spellQueue
 	spellQueue = {}
+	-- A spec swap "learns" that spec's talent spells; its own bars place them.
+	if ns.lastSpecSwap and GetTime() - ns.lastSpecSwap < 5 then return end
 	for _, spellID in ipairs(list) do PlaceSpell(spellID) end
 end
 

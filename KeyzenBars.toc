@@ -21,4 +21,5 @@ Totems.lua
 PetBar.lua
 Vehicle.lua
 XPBar.lua
+SpecBars.lua
 Options.lua

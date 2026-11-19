@@ -831,6 +831,10 @@ local function GeneralBehavior(view)
 	s = Section(view, "Spells")
 	Toggle(s, "Add new spells to bars", "Fills the first empty button when you learn one.",
 		function() return DB.autoAddSpells end, function(v) DB.autoAddSpells = v ns.ApplyAutoSpells() end)
+	if ns.SpecBarsSupported and ns.SpecBarsSupported() then
+		Toggle(s, "Remember bars per spec", "With dual spec, each spec keeps its own buttons.",
+			function() return DB.specBars ~= false end, function(v) DB.specBars = v end)
+	end
 
 	s = Section(view, "Blizzard")
 	Toggle(s, "Hide Blizzard action bars", "Takes effect after a reload.",

@@ -1,5 +1,9 @@
 # Keyzen Bars
 
+## 1.0.11
+
+- Dual spec: each spec now remembers its own buttons. Put a spell where another was in one spec, and swapping back puts the old one back. On by default; Remember bars per spec under General > Spells (Classic clients; retail already does this).
+
 ## 1.0.10
 
 - New Wallpaper theme for the options window: your own pictures from an AddOns\BBB_Wallpaper folder (shared with The BBB and Gear Guru), one picked or Shuffle all. Get the folder from BBB_Wallpaper-starter.zip on the GitHub release.
