@@ -39,6 +39,23 @@ local function Skin(button)
 			if tex then tex:SetAllPoints(icon) end
 		end
 	end
+	-- Autocast corners, the autocast sparkle and the attack flash are fixed
+	-- sizes made for Blizzard's 30px button, so they stuck out past ours.
+	local name = button:GetName()
+	local size = button:GetWidth()
+	local corners = button.AutoCastable or button.AutoCastOverlay or (name and _G[name .. "AutoCastable"])
+	if corners and corners.ClearAllPoints and size and size > 0 then
+		corners:ClearAllPoints()
+		corners:SetPoint("CENTER", button, "CENTER")
+		corners:SetSize(size * 1.7, size * 1.7)
+	end
+	for _, region in ipairs({ button.AutoCastShine or (name and _G[name .. "Shine"]),
+		button.Flash or (name and _G[name .. "Flash"]) }) do
+		if region and region.ClearAllPoints and icon then
+			region:ClearAllPoints()
+			region:SetAllPoints(icon)
+		end
+	end
 	local border = borders[button]
 	if not border then
 		border = ns.AddBorder(button, { 0, 0, 0 }, 0.06)

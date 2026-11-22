@@ -1,5 +1,9 @@
 # Keyzen Bars
 
+## 1.0.12
+
+- Pet bar: the yellow autocast corners, autocast sparkle and attack flash now fit the button instead of sticking out past it.
+
 ## 1.0.11
 
 - Dual spec: each spec now remembers its own buttons. Put a spell where another was in one spec, and swapping back puts the old one back. On by default; Remember bars per spec under General > Spells (Classic clients; retail already does this).
