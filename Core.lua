@@ -348,7 +348,8 @@ cooldownFont:SetFont(MEDIA .. "Fonts\\Montserrat-Bold.ttf", 12, "OUTLINE")
 local function AddBorder(frame, rgb, fill)
 	local edges = {}
 	for i = 1, 4 do edges[i] = frame:CreateTexture(nil, "BACKGROUND", nil, -8) end
-	local border = {}
+	local border = { edges = {} }
+	for _, t in ipairs(edges) do border.edges[t] = true end
 	function border:SetColorTexture(r, g, b, a)
 		for _, t in ipairs(edges) do t:SetColorTexture(r, g, b, a or 1) end
 	end

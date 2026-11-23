@@ -2,7 +2,7 @@
 
 ## 1.0.12
 
-- Pet bar: the yellow autocast corners, autocast sparkle and attack flash now fit the button instead of sticking out past it.
+- Pet bar: the red attack flash, yellow autocast corners and autocast sparkle now fit the button instead of sticking out past it.
 
 ## 1.0.11
 

@@ -39,21 +39,32 @@ local function Skin(button)
 			if tex then tex:SetAllPoints(icon) end
 		end
 	end
-	-- Autocast corners, the autocast sparkle and the attack flash are fixed
-	-- sizes made for Blizzard's 30px button, so they stuck out past ours.
+	-- Blizzard's extra art (the red attack flash, autocast corners and
+	-- sparkle) is a fixed size made for its own buttons, anchored by one
+	-- corner, so it spilled past ours. Each piece is pinned to the icon.
 	local name = button:GetName()
+	local corners = button.AutoCastable or (name and _G[name .. "AutoCastable"])
 	local size = button:GetWidth()
-	local corners = button.AutoCastable or button.AutoCastOverlay or (name and _G[name .. "AutoCastable"])
-	if corners and corners.ClearAllPoints and size and size > 0 then
+	if corners and size and size > 0 then
 		corners:ClearAllPoints()
 		corners:SetPoint("CENTER", button, "CENTER")
-		corners:SetSize(size * 1.7, size * 1.7)
+		corners:SetSize(size * 1.25, size * 1.25)
 	end
-	for _, region in ipairs({ button.AutoCastShine or (name and _G[name .. "Shine"]),
-		button.Flash or (name and _G[name .. "Flash"]) }) do
-		if region and region.ClearAllPoints and icon then
-			region:ClearAllPoints()
-			region:SetAllPoints(icon)
+	if icon then
+		local own = borders[button] and borders[button].edges or {}
+		for _, region in ipairs({ button:GetRegions() }) do
+			if region ~= icon and region ~= corners and not own[region]
+				and region:IsObjectType("Texture") and region:GetNumPoints() == 1 then
+				region:ClearAllPoints()
+				region:SetAllPoints(icon)
+			end
+		end
+		for _, region in ipairs({ button.Flash, name and _G[name .. "Flash"],
+			button.AutoCastShine, name and _G[name .. "Shine"], button.AutoCastOverlay }) do
+			if region and region ~= corners and region.ClearAllPoints then
+				region:ClearAllPoints()
+				region:SetAllPoints(icon)
+			end
 		end
 	end
 	local border = borders[button]
@@ -133,7 +144,11 @@ function ns.CreatePetBar()
 	if not (bar and _G.PetActionButton1) then return end
 	for i = 1, COUNT do
 		local button = _G["PetActionButton" .. i]
-		if button then buttons[#buttons + 1] = button end
+		if button then
+			buttons[#buttons + 1] = button
+			-- The attack flash can be set up the moment it starts.
+			if type(button.StartFlash) == "function" then hooksecurefunc(button, "StartFlash", Skin) end
+		end
 	end
 	holder = ns.CreateHolder("pet", "Pet")
 	frame = CreateFrame("Frame", "KeyzenBarsPetFrame", holder, "SecureHandlerStateTemplate")
